@@ -294,7 +294,7 @@ public class ImportAccountDialog implements Initializable {
         connectionProgressBar.setVisible(true);
         validationError.setVisible(false);
         backgroundExecutor.submit(() -> {
-            if (connectToLedger()) {
+            if (!connectToLedger()) {
                 Platform.runLater(() -> {
                     ledgerAccountListDialog.open(mouseEvent);
                     this.close(mouseEvent);
