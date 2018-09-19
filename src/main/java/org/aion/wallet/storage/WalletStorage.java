@@ -1,20 +1,27 @@
 package org.aion.wallet.storage;
 
 import org.aion.api.log.LogEnum;
+import org.aion.wallet.dto.ConnectionDetails;
+import org.aion.wallet.dto.ConnectionProvider;
 import org.aion.wallet.dto.LightAppSettings;
 import org.aion.wallet.exception.ValidationException;
 import org.aion.wallet.log.WalletLoggerFactory;
+import org.aion.wallet.util.CryptoUtils;
 import org.slf4j.Logger;
 
+import javax.annotation.Nonnull;
+import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.Properties;
@@ -33,15 +40,15 @@ public class WalletStorage {
 
     private static final String MASTER_MNEMONIC_PROP = "master.mnemonic";
 
-    private static final String MNEMONIC_ENCRYPTION_ALGORITHM = "Blowfish";
-
-    private static final String MNEMONIC_STRING_CONVERSION_CHARSET_NAME = "ISO-8859-1";
+    private static final String LEGACY_ENCRYPTION_ALGORITHM = "Blowfish";
 
     private static final WalletStorage INST;
 
     private static final String STORAGE_DIR;
 
     private static final String ACCOUNTS_FILE;
+
+    private static final String CONNECTIONS_FILE;
 
     private static final String WALLET_FILE;
 
@@ -56,6 +63,8 @@ public class WalletStorage {
 
         ACCOUNTS_FILE = STORAGE_DIR + File.separator + "accounts.properties";
 
+        CONNECTIONS_FILE = STORAGE_DIR + File.separator + "connections.properties";
+
         WALLET_FILE = STORAGE_DIR + File.separator + "wallet.properties";
     }
 
@@ -69,12 +78,16 @@ public class WalletStorage {
 
     private final Properties accountsProperties;
 
+    private final Properties connectionProperties;
+
     private final Properties lightAppProperties;
 
     private WalletStorage() throws IOException {
         final Path dir = Paths.get(STORAGE_DIR);
         ensureExistence(dir, true);
+        ensureExistence(KEYSTORE_PATH, true);
         accountsProperties = getPropertiesFomFIle(ACCOUNTS_FILE);
+        connectionProperties = getPropertiesFomFIle(CONNECTIONS_FILE);
         lightAppProperties = getPropertiesFomFIle(WALLET_FILE);
     }
 
@@ -107,15 +120,16 @@ public class WalletStorage {
     }
 
     private void saveAccounts() {
-        try (final OutputStream writer = Files.newOutputStream(Paths.get(ACCOUNTS_FILE))) {
-            accountsProperties.store(writer, LocalDateTime.now().toString());
-        } catch (IOException e) {
-            log.error(e.getMessage(), e);
-        }
+        savePropertiesToFile(accountsProperties, ACCOUNTS_FILE);
     }
 
     private void saveSettings() {
-        try (final OutputStream writer = Files.newOutputStream(Paths.get(WALLET_FILE))) {
+        savePropertiesToFile(lightAppProperties, WALLET_FILE);
+        savePropertiesToFile(connectionProperties, CONNECTIONS_FILE);
+    }
+
+    private void savePropertiesToFile(Properties lightAppProperties, String connectionsFile) {
+        try (final OutputStream writer = Files.newOutputStream(Paths.get(connectionsFile))) {
             lightAppProperties.store(writer, LocalDateTime.now().toString());
         } catch (IOException e) {
             log.error(e.getMessage(), e);
@@ -133,7 +147,7 @@ public class WalletStorage {
         }
     }
 
-    public String getMasterAccountMnemonic(String password) throws ValidationException {
+    public String getMasterAccountMnemonic(final String password) throws ValidationException {
         if (password == null || password.equalsIgnoreCase("")) {
             throw new ValidationException("Password is not valid");
         }
@@ -143,17 +157,17 @@ public class WalletStorage {
         }
 
         try {
-            return decryptMnemonic(encodedMnemonic, password);
+            return decryptMnemonic(encodedMnemonic.getBytes(StandardCharsets.ISO_8859_1), password);
         } catch (Exception e) {
-            throw new ValidationException("Cannot decrypt your seed");
+            throw new ValidationException("Cannot decrypt your seed!");
         }
     }
 
-    public void setMasterAccountMnemonic(final String mnemonic, String password) throws ValidationException {
+    public void setMasterAccountMnemonic(final String mnemonic, final String password) throws ValidationException {
         try {
             if (mnemonic != null) {
                 accountsProperties.setProperty(MASTER_MNEMONIC_PROP, encryptMnemonic(mnemonic, password));
-                saveSettings();
+                saveAccounts();
             }
         } catch (Exception e) {
             throw new ValidationException("Cannot encode master account key");
@@ -172,36 +186,56 @@ public class WalletStorage {
     public void incrementMasterAccountDerivations() throws ValidationException {
         if (hasMasterAccount()) {
             accountsProperties.setProperty(MASTER_DERIVATIONS_PROP, String.valueOf(getMasterAccountDerivations() + 1));
-            saveSettings();
+            saveAccounts();
         } else {
             throw new ValidationException("Cannot increment derivation when master account is missing");
         }
     }
 
     public final LightAppSettings getLightAppSettings(final ApiType type) {
-        return new LightAppSettings(lightAppProperties, type);
+        return new LightAppSettings(lightAppProperties, type, getConnectionProvider());
     }
 
-    public final void saveLightAppSettings(final LightAppSettings lightAppSettings) {
-        if (lightAppSettings != null) {
-            lightAppProperties.putAll(lightAppSettings.getSettingsProperties());
-            saveSettings();
+    public final void saveLightAppSettings(@Nonnull final LightAppSettings lightAppSettings) {
+        lightAppProperties.putAll(lightAppSettings.getSettingsProperties());
+        saveSettings();
+    }
+
+    public final ConnectionProvider getConnectionProvider() {
+        return new ConnectionProvider(connectionProperties);
+    }
+
+    public final void saveConnectionProperties(@Nonnull final ConnectionProvider connectionProvider) {
+        connectionProperties.clear();
+        for(ConnectionDetails connectionDetails : connectionProvider.getAllConnections()) {
+            connectionProperties.put(connectionDetails.serialized(), connectionDetails.getSecureKey());
         }
+        saveSettings();
     }
 
-    private String encryptMnemonic(String mnemonic, String password) throws Exception {
-        SecretKeySpec key = new SecretKeySpec(password.getBytes(), MNEMONIC_ENCRYPTION_ALGORITHM);
-        Cipher cipher = Cipher.getInstance(MNEMONIC_ENCRYPTION_ALGORITHM);
-        cipher.init(Cipher.ENCRYPT_MODE, key);
-        byte[] encrypted = cipher.doFinal(mnemonic.getBytes());
-        return new String(encrypted, MNEMONIC_STRING_CONVERSION_CHARSET_NAME);
+    private String encryptMnemonic(final String mnemonic, final String password) throws Exception {
+        return CryptoUtils.getEncryptedText(mnemonic, password);
     }
 
-    private String decryptMnemonic(String encryptedMnemonic, String password) throws Exception {
-        SecretKeySpec skeyspec = new SecretKeySpec(password.getBytes(), MNEMONIC_ENCRYPTION_ALGORITHM);
-        Cipher cipher = Cipher.getInstance(MNEMONIC_ENCRYPTION_ALGORITHM);
-        cipher.init(Cipher.DECRYPT_MODE, skeyspec);
-        byte[] decrypted = cipher.doFinal(encryptedMnemonic.getBytes(MNEMONIC_STRING_CONVERSION_CHARSET_NAME));
-        return new String(decrypted);
+    private String decryptMnemonic(final byte[] encryptedMnemonicBytes, final String password) throws ValidationException {
+        String result;
+        boolean isLegacy = false;
+        try {
+            result = new String(decryptLegacyMnemonic(encryptedMnemonicBytes, password));
+            isLegacy = true;
+        } catch (NoSuchAlgorithmException | UnsupportedEncodingException | BadPaddingException | IllegalBlockSizeException | InvalidKeyException | NoSuchPaddingException e) {
+            result = CryptoUtils.decryptMnemonic(encryptedMnemonicBytes, password);
+        }
+        if (isLegacy) {
+            setMasterAccountMnemonic(result, password);
+        }
+        return result;
+    }
+
+    private byte[] decryptLegacyMnemonic(final byte[] encryptedMnemonicBytes, final String password) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, UnsupportedEncodingException {
+        SecretKeySpec keySpec = new SecretKeySpec(password.getBytes(), LEGACY_ENCRYPTION_ALGORITHM);
+        Cipher cipher = Cipher.getInstance(LEGACY_ENCRYPTION_ALGORITHM);
+        cipher.init(Cipher.DECRYPT_MODE, keySpec);
+        return cipher.doFinal(encryptedMnemonicBytes);
     }
 }
