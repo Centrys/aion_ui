@@ -24,6 +24,7 @@
     </VBox>
     <Button fx:id="addMasterAccountButton" AnchorPane.topAnchor="320" AnchorPane.leftAnchor="10" prefWidth="170" mnemonicParsing="false" text="Add account" onMouseClicked="#openAddAccountDialog"/>
     <Button fx:id="unlockMasterAccountButton" AnchorPane.topAnchor="320" AnchorPane.leftAnchor="10" prefWidth="170" mnemonicParsing="false" text="Unlock account" onMouseClicked="#unlockMasterAccount"/>
+    <Button AnchorPane.topAnchor="320" AnchorPane.rightAnchor="10" prefWidth="350" text="Attempt hardcoded token swap" onMouseClicked="#attemptHardcodedSwap" />
     <Button AnchorPane.topAnchor="320" AnchorPane.leftAnchor="190" mnemonicParsing="false" text="Import account" onMouseClicked="#openImportAccountDialog"/>
 </AnchorPane>
 
