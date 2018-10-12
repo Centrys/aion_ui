@@ -9,10 +9,10 @@
 <AnchorPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="org.aion.wallet.ui.components.partials.TokenBalanceController"
-            prefHeight="230.0" prefWidth="300.0" styleClass="anchor-pane" layoutX="525" layoutY="75"
+            prefHeight="230.0" prefWidth="200.0" styleClass="anchor-pane" layoutX="625" layoutY="75"
             fx:id="tokenBalancePane">
 
-    <VBox spacing="10">
+    <VBox spacing="10" layoutX="10">
         <HBox spacing="5">
             <ImageView fitHeight="24.0" pickOnBounds="true" preserveRatio="true">
                 <Image url="@../icons/triangle-arrow-down.png"/>

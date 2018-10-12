@@ -38,6 +38,7 @@ public class TokenBalanceController implements Initializable {
         HBox row = new HBox();
         row.setSpacing(10);
         row.setAlignment(Pos.CENTER);
+        row.setPrefWidth(170);
         row.getStyleClass().add("transaction-row");
 
         Label tokenSymbol = new Label("AION");
@@ -46,10 +47,26 @@ public class TokenBalanceController implements Initializable {
         row.getChildren().add(tokenSymbol);
 
         Label tokenBalance = new Label("1000");
-        //tokenBalance.setPrefWidth(200);
         tokenBalance.getStyleClass().add("transaction-row-text");
         row.getChildren().add(tokenBalance);
 
+        HBox row1 = new HBox();
+        row1.setSpacing(10);
+        row1.setAlignment(Pos.CENTER_LEFT);
+        row1.setPrefWidth(170);
+        row1.getStyleClass().add("transaction-row");
+
+        Label tokenSymbol1 = new Label("TOKEN");
+        tokenSymbol1.setPrefWidth(70);
+        tokenSymbol1.getStyleClass().add("transaction-row-text");
+        row1.getChildren().add(tokenSymbol1);
+
+        Label tokenBalance1 = new Label("5");
+        tokenBalance1.getStyleClass().add("transaction-row-text");
+        row1.getChildren().add(tokenBalance1);
+
+
         tokenBalances.getChildren().add(row);
+        tokenBalances.getChildren().add(row1);
     }
 }
