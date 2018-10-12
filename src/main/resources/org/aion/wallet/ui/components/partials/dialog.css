@@ -100,3 +100,10 @@
 .link {
     -fx-cursor: hand;
 }
+
+.token-balance-label {
+    -fx-cursor: hand;
+    -fx-text-fill: BLACK;
+    -fx-font-family: 'Open Sans Light';
+    -fx-font-size: 18px;
+}

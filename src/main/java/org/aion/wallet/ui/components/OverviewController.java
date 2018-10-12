@@ -7,6 +7,8 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.HBox;
 import org.aion.api.log.LogEnum;
 import org.aion.wallet.connector.BlockchainConnector;
 import org.aion.wallet.console.ConsoleManager;
@@ -38,12 +40,16 @@ public class OverviewController extends AbstractController {
     private Button unlockMasterAccountButton;
     @FXML
     private ListView<AccountDTO> accountListView;
+    @FXML
+    private AnchorPane tokenBalancePane;
+    @FXML
+    private HBox toggleTokenBalance;
+
     private AddAccountDialog addAccountDialog;
     private ImportAccountDialog importAccountDialog;
     private UnlockMasterAccountDialog unlockMasterAccountDialog;
 
     private AccountDTO account;
-
 
     @Override
     public void internalInit(final URL location, final ResourceBundle resources) {
@@ -141,5 +147,10 @@ public class OverviewController extends AbstractController {
             return;
         }
         addAccountDialog.open(mouseEvent);
+    }
+
+    public void openTokenBalance(MouseEvent mouseEvent) {
+        tokenBalancePane.setVisible(true);
+        toggleTokenBalance.setVisible(false);
     }
 }

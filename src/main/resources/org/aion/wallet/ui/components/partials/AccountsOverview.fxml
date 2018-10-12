@@ -6,9 +6,16 @@
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.layout.*?>
 <?import org.aion.wallet.ui.components.account.AccountCellFactory?>
+<?import java.net.URL?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
 <AnchorPane id="overviewPane" stylesheets="@../contentPane.css"
             xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
             fx:controller="org.aion.wallet.ui.components.OverviewController" fx:id="parent">
+
+    <stylesheets>
+        <URL value="@dialog.css"/>
+    </stylesheets>
 
     <VBox alignment="CENTER" spacing="10" AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0" AnchorPane.topAnchor="15">
         <Label text="Accounts overview" styleClass="tile-label" alignment="CENTER"/>
@@ -25,5 +32,13 @@
     <Button fx:id="addMasterAccountButton" AnchorPane.topAnchor="320" AnchorPane.leftAnchor="10" prefWidth="170" mnemonicParsing="false" text="Add account" onMouseClicked="#openAddAccountDialog"/>
     <Button fx:id="unlockMasterAccountButton" AnchorPane.topAnchor="320" AnchorPane.leftAnchor="10" prefWidth="170" mnemonicParsing="false" text="Unlock account" onMouseClicked="#unlockMasterAccount"/>
     <Button AnchorPane.topAnchor="320" AnchorPane.leftAnchor="190" mnemonicParsing="false" text="Import account" onMouseClicked="#openImportAccountDialog"/>
+    <HBox fx:id="toggleTokenBalance" AnchorPane.topAnchor="320" AnchorPane.rightAnchor="10" spacing="5">
+        <ImageView fitHeight="24.0" pickOnBounds="true" preserveRatio="true">
+            <Image url="@../icons/triangle-arrow-up.png"/>
+        </ImageView>
+        <Label text="Token balances" styleClass="token-balance-label" AnchorPane.topAnchor="325" AnchorPane.rightAnchor="10" onMouseClicked="#openTokenBalance" />
+    </HBox>
+
+    <fx:include fx:id="tokenBalancePane" source="TokenBalance.fxml" visible="false"/>
 </AnchorPane>
 
