@@ -10,15 +10,15 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import org.aion.api.log.LogEnum;
 import org.aion.wallet.connector.BlockchainConnector;
 import org.aion.wallet.dto.AccountDTO;
-import org.aion.wallet.events.AccountEvent;
-import org.aion.wallet.events.EventBusFactory;
-import org.aion.wallet.events.HeaderPaneButtonEvent;
-import org.aion.wallet.events.RefreshEvent;
+import org.aion.wallet.events.*;
 import org.aion.wallet.log.WalletLoggerFactory;
+import org.aion.wallet.ui.components.partials.TokenBalanceController;
 import org.aion.wallet.util.BalanceUtils;
 import org.aion.wallet.util.UIUtils;
 import org.aion.wallet.util.URLManager;
@@ -61,6 +61,11 @@ public class HeaderPaneControls extends AbstractController {
 //    private VBox contractsButton;
     @FXML
     private VBox settingsButton;
+
+    @FXML
+    private HBox toggleTokenBalance;
+
+    private TokenBalanceController tokenBalancePane = new TokenBalanceController();
 
     private String accountAddress = "";
 
@@ -134,6 +139,7 @@ public class HeaderPaneControls extends AbstractController {
                 UIUtils.setWidth(activeAccount);
                 UIUtils.setWidth(accountBalance);
             }
+            toggleTokenBalance.setVisible(true);
         } else if (AccountEvent.Type.LOCKED.equals(event.getType())) {
             if (account.getPublicAddress().equals(accountAddress)) {
                 accountAddress = "";
@@ -141,6 +147,7 @@ public class HeaderPaneControls extends AbstractController {
                 accountBalance.setVisible(false);
                 activeAccount.setText("");
             }
+            toggleTokenBalance.setVisible(false);
         }
     }
 
@@ -165,5 +172,9 @@ public class HeaderPaneControls extends AbstractController {
             accountBalance.setText(newBalance);
             UIUtils.setWidth(accountBalance);
         }
+    }
+
+    public void openTokenBalance(MouseEvent mouseEvent) {
+        tokenBalancePane.open(mouseEvent);
     }
 }

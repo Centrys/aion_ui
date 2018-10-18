@@ -6,18 +6,23 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.Button?>
+<?import java.net.URL?>
 <AnchorPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="org.aion.wallet.ui.components.partials.TokenBalanceController"
-            prefHeight="250.0" prefWidth="300.0" styleClass="anchor-pane" layoutX="500" layoutY="-60"
+            prefHeight="250.0" prefWidth="300.0" styleClass="anchor-pane"
             fx:id="tokenBalancePane">
+
+    <stylesheets>
+        <URL value="@dialog.css" />
+    </stylesheets>
 
     <VBox spacing="10" layoutX="15" layoutY="5">
         <HBox spacing="5">
             <ImageView fitHeight="24.0" pickOnBounds="true" preserveRatio="true">
                 <Image url="@../icons/triangle-arrow-up.png"/>
             </ImageView>
-            <Label text="Token balances" styleClass="token-balance-label" onMouseClicked="#closeTokenBalance"/>
+            <Label text="Token balances" styleClass="token-balance-label" onMouseClicked="#close"/>
         </HBox>
 
         <VBox fx:id="tokenBalances" spacing="10"/>

@@ -1,14 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.ListView?>
-<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import org.aion.wallet.ui.components.account.AccountCellFactory?>
 <?import java.net.URL?>
-<?import javafx.scene.image.ImageView?>
-<?import javafx.scene.image.Image?>
 <AnchorPane id="overviewPane" stylesheets="@../contentPane.css"
             xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
             fx:controller="org.aion.wallet.ui.components.OverviewController" fx:id="parent">
@@ -21,7 +16,7 @@
         <Label text="Accounts overview" styleClass="tile-label" alignment="CENTER"/>
         <AnchorPane>
             <ScrollPane hbarPolicy="NEVER" vbarPolicy="NEVER" AnchorPane.rightAnchor="0" AnchorPane.leftAnchor="0">
-                <ListView fx:id="accountListView" styleClass="accounts-list, custom-scrollbar"  prefHeight="240">
+                <ListView fx:id="accountListView" styleClass="accounts-list, custom-scrollbar" prefHeight="240">
                     <cellFactory>
                         <AccountCellFactory/>
                     </cellFactory>
@@ -29,16 +24,11 @@
             </ScrollPane>
         </AnchorPane>
     </VBox>
-    <Button fx:id="addMasterAccountButton" AnchorPane.topAnchor="320" AnchorPane.leftAnchor="10" prefWidth="170" mnemonicParsing="false" text="Add account" onMouseClicked="#openAddAccountDialog"/>
-    <Button fx:id="unlockMasterAccountButton" AnchorPane.topAnchor="320" AnchorPane.leftAnchor="10" prefWidth="170" mnemonicParsing="false" text="Unlock account" onMouseClicked="#unlockMasterAccount"/>
-    <Button AnchorPane.topAnchor="320" AnchorPane.leftAnchor="190" mnemonicParsing="false" text="Import account" onMouseClicked="#openImportAccountDialog"/>
-    <HBox fx:id="toggleTokenBalance" AnchorPane.topAnchor="-65" AnchorPane.rightAnchor="10" spacing="5" visible="false">
-        <ImageView fitHeight="24.0" pickOnBounds="true" preserveRatio="true">
-            <Image url="@../icons/triangle-arrow-down.png"/>
-        </ImageView>
-        <Label text="Token balances" styleClass="token-balance-label" AnchorPane.topAnchor="325" AnchorPane.rightAnchor="10" onMouseClicked="#openTokenBalance" />
-    </HBox>
-
-    <fx:include fx:id="tokenBalancePane" source="TokenBalance.fxml" visible="false"/>
+    <Button fx:id="addMasterAccountButton" AnchorPane.topAnchor="320" AnchorPane.leftAnchor="10" prefWidth="170"
+            mnemonicParsing="false" text="Add account" onMouseClicked="#openAddAccountDialog"/>
+    <Button fx:id="unlockMasterAccountButton" AnchorPane.topAnchor="320" AnchorPane.leftAnchor="10" prefWidth="170"
+            mnemonicParsing="false" text="Unlock account" onMouseClicked="#unlockMasterAccount"/>
+    <Button AnchorPane.topAnchor="320" AnchorPane.leftAnchor="190" mnemonicParsing="false" text="Import account"
+            onMouseClicked="#openImportAccountDialog"/>
 </AnchorPane>
 

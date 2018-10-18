@@ -1,19 +1,31 @@
 package org.aion.wallet.ui.components.partials;
 
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.input.InputEvent;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.stage.Modality;
+import javafx.stage.Popup;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
+import org.aion.api.log.LogEnum;
+import org.aion.wallet.log.WalletLoggerFactory;
+import org.slf4j.Logger;
 
+import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
 public class TokenBalanceController implements Initializable {
+    private static final Logger log = WalletLoggerFactory.getLogger(LogEnum.WLT.name());
 
     @FXML
     private AnchorPane tokenBalancePane;
@@ -26,24 +38,37 @@ public class TokenBalanceController implements Initializable {
     @FXML
     private TextField customTokenContractAddress;
 
-    public void closeTokenBalance(MouseEvent mouseEvent) {
-        tokenBalancePane.setVisible(false);
-        tokenBalancePane.setPrefHeight(250);
-        customTokenForm.setVisible(false);
-        customTokenLink.setVisible(true);
-
-        Label source = (Label) mouseEvent.getSource();
-        HBox h = (HBox) source.getParent();
-        VBox v = (VBox) h.getParent();
-        AnchorPane a = (AnchorPane) v.getParent();
-        AnchorPane aMare = (AnchorPane) a.getParent();
-        aMare.getChildren().get(4).setVisible(true);
-    }
-
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         displayListOfBalances();
     }
+
+    public void open(MouseEvent mouseEvent) {
+        Popup popup = new Popup();
+        popup.setAutoHide(true);
+        popup.setAutoFix(true);
+
+        Pane tokenBalanceDialog;
+        try {
+            tokenBalanceDialog = FXMLLoader.load(getClass().getResource("TokenBalance.fxml"));
+        } catch (IOException e) {
+            log.error(e.getMessage(), e);
+            return;
+        }
+
+        Node eventSource = (Node) mouseEvent.getSource();
+        final double windowX = eventSource.getScene().getWindow().getX();
+        final double windowY = eventSource.getScene().getWindow().getY();
+        popup.setX(windowX + eventSource.getScene().getWidth() / 1.07 - tokenBalanceDialog.getPrefWidth() / 1.07);
+        popup.setY(windowY + eventSource.getScene().getHeight() / 4.75 - tokenBalanceDialog.getPrefHeight() / 4.75);
+        popup.getContent().addAll(tokenBalanceDialog);
+        popup.show(eventSource.getScene().getWindow());
+    }
+
+    public void close(InputEvent eventSource) {
+        ((Node) eventSource.getSource()).getScene().getWindow().hide();
+    }
+
 
     private void displayListOfBalances() {
         HBox row = new HBox();

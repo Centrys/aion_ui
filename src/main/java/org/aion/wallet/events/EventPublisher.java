@@ -96,7 +96,6 @@ public class EventPublisher {
     }
 
     public static void fireLedgerAccountSelected(final InputEvent eventSource) {
-        EventBusFactory.getBus(UiMessageEvent.ID)
-                .post(new UiMessageEvent(UiMessageEvent.Type.LEDGER_ACCOUNT_SELECTED, eventSource));
+        EventBusFactory.getBus(UiMessageEvent.ID).post(new UiMessageEvent(UiMessageEvent.Type.LEDGER_ACCOUNT_SELECTED, eventSource));
     }
 }

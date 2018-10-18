@@ -13,10 +13,7 @@ import org.aion.api.log.LogEnum;
 import org.aion.wallet.connector.BlockchainConnector;
 import org.aion.wallet.console.ConsoleManager;
 import org.aion.wallet.dto.AccountDTO;
-import org.aion.wallet.events.AccountEvent;
-import org.aion.wallet.events.EventBusFactory;
-import org.aion.wallet.events.HeaderPaneButtonEvent;
-import org.aion.wallet.events.RefreshEvent;
+import org.aion.wallet.events.*;
 import org.aion.wallet.exception.ValidationException;
 import org.aion.wallet.log.WalletLoggerFactory;
 import org.aion.wallet.ui.components.partials.AddAccountDialog;
@@ -40,10 +37,6 @@ public class OverviewController extends AbstractController {
     private Button unlockMasterAccountButton;
     @FXML
     private ListView<AccountDTO> accountListView;
-    @FXML
-    private AnchorPane tokenBalancePane;
-    @FXML
-    private HBox toggleTokenBalance;
 
     private AddAccountDialog addAccountDialog;
     private ImportAccountDialog importAccountDialog;
@@ -101,14 +94,11 @@ public class OverviewController extends AbstractController {
             if (account.isActive()) {
                 this.account = account;
             }
-//            toggleTokenBalance.setVisible(true);
             reloadAccounts();
         } else if (AccountEvent.Type.LOCKED.equals(event.getType())) {
             if (account.equals(this.account)) {
                 this.account = null;
             }
-            toggleTokenBalance.setVisible(false);
-//            tokenBalancePane.setVisible(false);
             reloadAccounts();
         }
     }
@@ -150,11 +140,5 @@ public class OverviewController extends AbstractController {
             return;
         }
         addAccountDialog.open(mouseEvent);
-    }
-
-    public void openTokenBalance(MouseEvent mouseEvent) {
-//        tokenBalancePane.setPrefHeight(250);
-//        tokenBalancePane.setVisible(true);
-        toggleTokenBalance.setVisible(false);
     }
 }

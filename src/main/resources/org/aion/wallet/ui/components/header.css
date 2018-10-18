@@ -63,3 +63,10 @@
     -fx-border-color: #4221CC;
     -fx-border-width: 0 0 1 0;
 }
+
+.token-balance-label {
+    -fx-cursor: hand;
+    -fx-text-fill: BLACK;
+    -fx-font-family: 'Open Sans Light';
+    -fx-font-size: 18px;
+}

@@ -101,9 +101,10 @@
     -fx-cursor: hand;
 }
 
-.token-balance-label {
-    -fx-cursor: hand;
-    -fx-text-fill: BLACK;
-    -fx-font-family: 'Open Sans Light';
+.button {
+    -fx-background-color: #4221cc;
+    -fx-background-radius: 0,0,0,0;
+    -fx-text-fill: white;
+    -fx-font-family: 'Open Sans Bold';
     -fx-font-size: 18px;
 }
