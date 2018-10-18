@@ -32,9 +32,9 @@
     <Button fx:id="addMasterAccountButton" AnchorPane.topAnchor="320" AnchorPane.leftAnchor="10" prefWidth="170" mnemonicParsing="false" text="Add account" onMouseClicked="#openAddAccountDialog"/>
     <Button fx:id="unlockMasterAccountButton" AnchorPane.topAnchor="320" AnchorPane.leftAnchor="10" prefWidth="170" mnemonicParsing="false" text="Unlock account" onMouseClicked="#unlockMasterAccount"/>
     <Button AnchorPane.topAnchor="320" AnchorPane.leftAnchor="190" mnemonicParsing="false" text="Import account" onMouseClicked="#openImportAccountDialog"/>
-    <HBox fx:id="toggleTokenBalance" AnchorPane.topAnchor="320" AnchorPane.rightAnchor="10" spacing="5">
+    <HBox fx:id="toggleTokenBalance" AnchorPane.topAnchor="-65" AnchorPane.rightAnchor="10" spacing="5" visible="false">
         <ImageView fitHeight="24.0" pickOnBounds="true" preserveRatio="true">
-            <Image url="@../icons/triangle-arrow-up.png"/>
+            <Image url="@../icons/triangle-arrow-down.png"/>
         </ImageView>
         <Label text="Token balances" styleClass="token-balance-label" AnchorPane.topAnchor="325" AnchorPane.rightAnchor="10" onMouseClicked="#openTokenBalance" />
     </HBox>

@@ -101,11 +101,14 @@ public class OverviewController extends AbstractController {
             if (account.isActive()) {
                 this.account = account;
             }
+//            toggleTokenBalance.setVisible(true);
             reloadAccounts();
         } else if (AccountEvent.Type.LOCKED.equals(event.getType())) {
             if (account.equals(this.account)) {
                 this.account = null;
             }
+            toggleTokenBalance.setVisible(false);
+//            tokenBalancePane.setVisible(false);
             reloadAccounts();
         }
     }
@@ -150,7 +153,8 @@ public class OverviewController extends AbstractController {
     }
 
     public void openTokenBalance(MouseEvent mouseEvent) {
-        tokenBalancePane.setVisible(true);
+//        tokenBalancePane.setPrefHeight(250);
+//        tokenBalancePane.setVisible(true);
         toggleTokenBalance.setVisible(false);
     }
 }

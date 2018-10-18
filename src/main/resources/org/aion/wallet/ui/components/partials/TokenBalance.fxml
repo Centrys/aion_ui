@@ -1,25 +1,38 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.layout.AnchorPane?>
-<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.image.Image?>
-<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.Button?>
 <AnchorPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="org.aion.wallet.ui.components.partials.TokenBalanceController"
-            prefHeight="230.0" prefWidth="200.0" styleClass="anchor-pane" layoutX="625" layoutY="75"
+            prefHeight="250.0" prefWidth="300.0" styleClass="anchor-pane" layoutX="500" layoutY="-60"
             fx:id="tokenBalancePane">
 
-    <VBox spacing="10" layoutX="10">
+    <VBox spacing="10" layoutX="15" layoutY="5">
         <HBox spacing="5">
             <ImageView fitHeight="24.0" pickOnBounds="true" preserveRatio="true">
-                <Image url="@../icons/triangle-arrow-down.png"/>
+                <Image url="@../icons/triangle-arrow-up.png"/>
             </ImageView>
-            <Label text="Token balances" styleClass="token-balance-label" onMouseClicked="#closeTokenBalance" />
+            <Label text="Token balances" styleClass="token-balance-label" onMouseClicked="#closeTokenBalance"/>
         </HBox>
+
         <VBox fx:id="tokenBalances" spacing="10"/>
     </VBox>
+
+    <VBox fx:id="customTokenForm" AnchorPane.bottomAnchor="30" AnchorPane.leftAnchor="5" spacing="10" prefWidth="300" visible="false">
+        <TextField fx:id="customTokenContractAddress" promptText="Contract address"/>
+        <TextField promptText="Symbol"/>
+        <TextField promptText="Decimals"/>
+        <HBox spacing="10">
+            <Button text="Save"/>
+            <Button text="Cancel" onMouseClicked="#cancelCustomToken"/>
+        </HBox>
+    </VBox>
+
+    <Label fx:id="customTokenLink" text="+ Add custom token" AnchorPane.bottomAnchor="5" AnchorPane.leftAnchor="5" styleClass="link" onMouseClicked="#addCustomToken"/>
 
 </AnchorPane>
