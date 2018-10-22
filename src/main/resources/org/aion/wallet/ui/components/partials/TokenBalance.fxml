@@ -30,10 +30,10 @@
 
     <VBox fx:id="customTokenForm" AnchorPane.bottomAnchor="30" AnchorPane.leftAnchor="5" spacing="10" prefWidth="300" visible="false">
         <TextField fx:id="customTokenContractAddress" promptText="Contract address"/>
-        <TextField promptText="Symbol"/>
-        <TextField promptText="Decimals"/>
+        <TextField fx:id="customTokenSymbol" promptText="Symbol"/>
+        <TextField fx:id="customTokenDecimals" promptText="Decimals"/>
         <HBox spacing="10">
-            <Button text="Save"/>
+            <Button text="Save" onMouseClicked="#saveCustomToken"/>
             <Button text="Cancel" onMouseClicked="#cancelCustomToken"/>
         </HBox>
     </VBox>

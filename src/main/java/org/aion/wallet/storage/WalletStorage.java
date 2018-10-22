@@ -1,9 +1,7 @@
 package org.aion.wallet.storage;
 
 import org.aion.api.log.LogEnum;
-import org.aion.wallet.dto.ConnectionDetails;
-import org.aion.wallet.dto.ConnectionProvider;
-import org.aion.wallet.dto.LightAppSettings;
+import org.aion.wallet.dto.*;
 import org.aion.wallet.exception.ValidationException;
 import org.aion.wallet.log.WalletLoggerFactory;
 import org.aion.wallet.util.CryptoUtils;
@@ -50,6 +48,8 @@ public class WalletStorage {
 
     private static final String CONNECTIONS_FILE;
 
+    private static final String TOKENS_FILE;
+
     private static final String WALLET_FILE;
 
     static {
@@ -64,6 +64,8 @@ public class WalletStorage {
         ACCOUNTS_FILE = STORAGE_DIR + File.separator + "accounts.properties";
 
         CONNECTIONS_FILE = STORAGE_DIR + File.separator + "connections.properties";
+
+        TOKENS_FILE = STORAGE_DIR + File.separator + "tokens.properties";
 
         WALLET_FILE = STORAGE_DIR + File.separator + "wallet.properties";
     }
@@ -82,6 +84,8 @@ public class WalletStorage {
 
     private final Properties lightAppProperties;
 
+    private final Properties tokenProperties;
+
     private WalletStorage() throws IOException {
         final Path dir = Paths.get(STORAGE_DIR);
         ensureExistence(dir, true);
@@ -89,6 +93,7 @@ public class WalletStorage {
         accountsProperties = getPropertiesFomFIle(ACCOUNTS_FILE);
         connectionProperties = getPropertiesFomFIle(CONNECTIONS_FILE);
         lightAppProperties = getPropertiesFomFIle(WALLET_FILE);
+        tokenProperties = getPropertiesFomFIle(TOKENS_FILE);
     }
 
     public static WalletStorage getInstance() {
@@ -117,6 +122,7 @@ public class WalletStorage {
     public void save() {
         saveAccounts();
         saveSettings();
+        saveTokenProperties();
     }
 
     private void saveAccounts() {
@@ -190,6 +196,21 @@ public class WalletStorage {
         } else {
             throw new ValidationException("Cannot increment derivation when master account is missing");
         }
+    }
+
+    public final TokenProvider getTokenProvider() {
+        return new TokenProvider(tokenProperties);
+    }
+
+    public final void saveToken(final TokenDetails newTokenDetails) {
+        if(newTokenDetails != null) {
+            tokenProperties.put(newTokenDetails.getSymbol(), newTokenDetails.serialized());
+            saveTokenProperties();
+        }
+    }
+
+    public final void saveTokenProperties() {
+        savePropertiesToFile(tokenProperties, TOKENS_FILE);
     }
 
     public final LightAppSettings getLightAppSettings(final ApiType type) {

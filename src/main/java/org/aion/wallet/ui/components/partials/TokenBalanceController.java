@@ -5,18 +5,19 @@ import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.input.InputEvent;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
-import javafx.stage.Modality;
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Popup;
-import javafx.stage.Stage;
-import javafx.stage.StageStyle;
 import org.aion.api.log.LogEnum;
+import org.aion.wallet.connector.BlockchainConnector;
+import org.aion.wallet.dto.TokenDetails;
+import org.aion.wallet.dto.TokenProvider;
 import org.aion.wallet.log.WalletLoggerFactory;
 import org.slf4j.Logger;
 
@@ -26,6 +27,9 @@ import java.util.ResourceBundle;
 
 public class TokenBalanceController implements Initializable {
     private static final Logger log = WalletLoggerFactory.getLogger(LogEnum.WLT.name());
+
+    private final BlockchainConnector blockchainConnector = BlockchainConnector.getInstance();
+    private TokenProvider tokenProvider = blockchainConnector.getTokenProvider();
 
     @FXML
     private AnchorPane tokenBalancePane;
@@ -37,6 +41,10 @@ public class TokenBalanceController implements Initializable {
     private Label customTokenLink;
     @FXML
     private TextField customTokenContractAddress;
+    @FXML
+    private TextField customTokenSymbol;
+    @FXML
+    private TextField customTokenDecimals;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -71,38 +79,24 @@ public class TokenBalanceController implements Initializable {
 
 
     private void displayListOfBalances() {
-        HBox row = new HBox();
-        row.setSpacing(10);
-        row.setAlignment(Pos.CENTER_LEFT);
-        row.setPrefWidth(290);
-        row.getStyleClass().add("transaction-row");
+        for (TokenDetails tokenDetails : tokenProvider.getAllTokens()) {
+            HBox row = new HBox();
+            row.setSpacing(10);
+            row.setAlignment(Pos.CENTER_LEFT);
+            row.setPrefWidth(290);
+            row.getStyleClass().add("transaction-row");
 
-        Label tokenSymbol = new Label("AION");
-        tokenSymbol.setPrefWidth(70);
-        tokenSymbol.getStyleClass().add("transaction-row-text");
-        row.getChildren().add(tokenSymbol);
+            Label tokenSymbol = new Label(tokenDetails.getSymbol());
+            tokenSymbol.setPrefWidth(70);
+            tokenSymbol.getStyleClass().add("transaction-row-text");
+            row.getChildren().add(tokenSymbol);
 
-        Label tokenBalance = new Label("1000");
-        tokenBalance.getStyleClass().add("transaction-row-text");
-        row.getChildren().add(tokenBalance);
+            Label tokenBalance = new Label("1000");
+            tokenBalance.getStyleClass().add("transaction-row-text");
+            row.getChildren().add(tokenBalance);
 
-        HBox row1 = new HBox();
-        row1.setSpacing(10);
-        row1.setAlignment(Pos.CENTER_LEFT);
-        row1.setPrefWidth(290);
-        row1.getStyleClass().add("transaction-row");
-
-        Label tokenSymbol1 = new Label("TOKEN");
-        tokenSymbol1.setPrefWidth(70);
-        tokenSymbol1.getStyleClass().add("transaction-row-text");
-        row1.getChildren().add(tokenSymbol1);
-
-        Label tokenBalance1 = new Label("5");
-        tokenBalance1.getStyleClass().add("transaction-row-text");
-        row1.getChildren().add(tokenBalance1);
-
-        tokenBalances.getChildren().add(row);
-        tokenBalances.getChildren().add(row1);
+            tokenBalances.getChildren().add(row);
+        }
     }
 
     public void addCustomToken(MouseEvent mouseEvent) {
@@ -115,5 +109,11 @@ public class TokenBalanceController implements Initializable {
         customTokenForm.setVisible(false);
         customTokenLink.setVisible(true);
         tokenBalancePane.setPrefHeight(300);
+    }
+
+    public void saveCustomToken(MouseEvent mouseEvent) {
+        TokenDetails newToken = new TokenDetails(customTokenContractAddress.getText(), customTokenSymbol.getText(), Integer.valueOf(customTokenDecimals.getText()));
+
+        blockchainConnector.saveToken(newToken);
     }
 }
