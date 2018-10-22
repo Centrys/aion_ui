@@ -1,6 +1,5 @@
 package org.aion.wallet.connector;
 
-import ch.qos.logback.core.subst.Token;
 import org.aion.wallet.account.AccountManager;
 import org.aion.wallet.connector.api.ApiBlockchainConnector;
 import org.aion.wallet.connector.dto.SendTransactionDTO;
@@ -205,11 +204,15 @@ public abstract class BlockchainConnector {
         walletStorage.saveConnectionProperties(connectionProvider);
     }
 
-    public final TokenProvider getTokenProvider() {
-        return walletStorage.getTokenProvider();
-    }
-
     public final void saveToken(final TokenDetails newTokenDetails) {
         walletStorage.saveToken(newTokenDetails);
+    }
+
+    public List<TokenDetails> getAccountTokenDetails(final String address) {
+        return walletStorage.getAccountTokenDetails(address);
+    }
+
+    public final void addAccountToken(final String address, final String tokenSymbol) {
+        walletStorage.addAccountToken(address, tokenSymbol);
     }
 }

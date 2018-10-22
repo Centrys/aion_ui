@@ -24,7 +24,7 @@ public class TokenProvider {
         }
     }
 
-    public Set<TokenDetails> getAllTokens() {
+    public Set<TokenDetails> getAllTokens(final String address) {
         return tokens;
     }
 

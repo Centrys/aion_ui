@@ -21,8 +21,7 @@ import java.nio.file.Paths;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
-import java.util.Optional;
-import java.util.Properties;
+import java.util.*;
 
 public class WalletStorage {
 
@@ -33,6 +32,7 @@ public class WalletStorage {
     private static final String BLANK = "";
 
     private static final String ACCOUNT_NAME_PROP = ".name";
+    private static final String ACCOUNT_TOKENS_PROP = ".tokens";
 
     private static final String MASTER_DERIVATIONS_PROP = "master.derivations";
 
@@ -153,6 +153,34 @@ public class WalletStorage {
         }
     }
 
+    public Set<String> getAccountTokens(final String address) {
+        Object s = accountsProperties.get(address + ACCOUNT_TOKENS_PROP);
+        if(s != null) {
+            return new HashSet<>(Arrays.asList(s.toString().split(":")));
+        }
+        return new HashSet<>();
+    }
+
+    public void addAccountToken(final String address, final String tokenSymbol) {
+        if(address != null && tokenSymbol != null) {
+            Set<String> accountTokens = getAccountTokens(address);
+            if(!accountTokens.contains(tokenSymbol)) {
+                accountTokens.add(tokenSymbol);
+                accountsProperties.setProperty(address + ACCOUNT_TOKENS_PROP, String.join(":", accountTokens));
+                saveAccounts();
+            }
+        }
+    }
+
+    public List<TokenDetails> getAccountTokenDetails(final String address) {
+        List<TokenDetails> result = new ArrayList<>();
+        for(String accountToken : getAccountTokens(address)) {
+            String serializedTokenDetails = String.valueOf(tokenProperties.get(accountToken));
+            result.add(new TokenDetails(serializedTokenDetails));
+        }
+        return result;
+    }
+
     public String getMasterAccountMnemonic(final String password) throws ValidationException {
         if (password == null || password.equalsIgnoreCase("")) {
             throw new ValidationException("Password is not valid");
@@ -196,10 +224,6 @@ public class WalletStorage {
         } else {
             throw new ValidationException("Cannot increment derivation when master account is missing");
         }
-    }
-
-    public final TokenProvider getTokenProvider() {
-        return new TokenProvider(tokenProperties);
     }
 
     public final void saveToken(final TokenDetails newTokenDetails) {

@@ -7,6 +7,7 @@
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.Button?>
 <?import java.net.URL?>
+<?import javafx.scene.control.ScrollPane?>
 <AnchorPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="org.aion.wallet.ui.components.partials.TokenBalanceController"
@@ -24,11 +25,12 @@
             </ImageView>
             <Label text="Token balances" styleClass="token-balance-label" onMouseClicked="#close"/>
         </HBox>
-
-        <VBox fx:id="tokenBalances" spacing="10"/>
+        <ScrollPane fx:id="tokenBalancesScrollPane" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED">
+            <VBox fx:id="tokenBalances" spacing="10" prefHeight="205"/>
+        </ScrollPane>
     </VBox>
 
-    <VBox fx:id="customTokenForm" AnchorPane.bottomAnchor="30" AnchorPane.leftAnchor="5" spacing="10" prefWidth="300" visible="false">
+    <VBox fx:id="customTokenForm" AnchorPane.bottomAnchor="5" AnchorPane.leftAnchor="5" spacing="5" prefWidth="300" visible="false">
         <TextField fx:id="customTokenContractAddress" promptText="Contract address"/>
         <TextField fx:id="customTokenSymbol" promptText="Symbol"/>
         <TextField fx:id="customTokenDecimals" promptText="Decimals"/>
@@ -38,6 +40,6 @@
         </HBox>
     </VBox>
 
-    <Label fx:id="customTokenLink" text="+ Add custom token" AnchorPane.bottomAnchor="5" AnchorPane.leftAnchor="5" styleClass="link" onMouseClicked="#addCustomToken"/>
+    <Label fx:id="customTokenLink" text="+ Add custom token" AnchorPane.leftAnchor="5" AnchorPane.topAnchor="275" styleClass="link" onMouseClicked="#addCustomToken"/>
 
 </AnchorPane>
