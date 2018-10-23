@@ -64,7 +64,7 @@
                             onMouseClicked="#sendAion" onKeyPressed="#sendPressed" text="Generate transaction"
                             styleClass="button"/>
                 </HBox>
-                <Label fx:id="timedoutTransactionsLabel" onMouseClicked="#onTimedOutTransactionsClick"/>
+                <Label fx:id="timedOutTransactionsLabel" onMouseClicked="#onTimedOutTransactionsClick"/>
             </VBox>
         </HBox>
     </VBox>

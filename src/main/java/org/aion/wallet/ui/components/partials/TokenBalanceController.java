@@ -1,7 +1,6 @@
 package org.aion.wallet.ui.components.partials;
 
 import com.google.common.eventbus.Subscribe;
-import com.google.zxing.common.StringUtils;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -15,7 +14,6 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import net.sf.antcontrib.property.Num;
 import org.aion.api.log.LogEnum;
 import org.aion.wallet.connector.BlockchainConnector;
 import org.aion.wallet.dto.TokenDetails;
@@ -26,6 +24,7 @@ import org.aion.wallet.events.UiMessageEvent;
 import org.aion.wallet.exception.ValidationException;
 import org.aion.wallet.log.WalletLoggerFactory;
 import org.aion.wallet.util.AddressUtils;
+import org.aion.wallet.util.BalanceUtils;
 import org.slf4j.Logger;
 
 import java.net.URL;
@@ -113,7 +112,15 @@ public class TokenBalanceController implements Initializable {
                 tokenSymbol.getStyleClass().add("transaction-row-text");
                 row.getChildren().add(tokenSymbol);
 
-                Label tokenBalance = new Label("1000");
+                String balance = null;
+                try {
+                    balance = BalanceUtils.formatBalanceWithNumberOfDecimals(
+                            blockchainConnector.getTokenBalance(accountAddress, tokenDetails), 6
+                    );
+                } catch (ValidationException e) {
+                    log.error(e.getMessage());
+                }
+                Label tokenBalance = new Label(balance);
                 tokenBalance.getStyleClass().add("transaction-row-text");
                 row.getChildren().add(tokenBalance);
 
@@ -158,7 +165,11 @@ public class TokenBalanceController implements Initializable {
             return;
         }
 
-        TokenDetails newToken = new TokenDetails(customTokenContractAddress.getText(), customTokenSymbol.getText(), Double.valueOf(customTokenDecimals.getText()));
+        TokenDetails newToken = new TokenDetails(
+                customTokenContractAddress.getText(),
+                customTokenSymbol.getText(),
+                Integer.parseInt(customTokenDecimals.getText())
+        );
         blockchainConnector.saveToken(newToken);
         blockchainConnector.addAccountToken(accountAddress, newToken.getSymbol());
 
@@ -188,7 +199,7 @@ public class TokenBalanceController implements Initializable {
             throw new ValidationException("The provided token symbol is not valid!");
         }
         ArrayList coinSymbols = new ArrayList<>(Collections.singleton("AION"));
-        List<String> tokenSymbols = blockchainConnector.getAccountTokenDetails(accountAddress).stream().map(p -> p.getSymbol()).collect(Collectors.toList());
+        List<String> tokenSymbols = blockchainConnector.getAccountTokenDetails(accountAddress).stream().map(TokenDetails::getSymbol).collect(Collectors.toList());
         if(coinSymbols.contains(customTokenSymbol.getText()) || tokenSymbols.contains(customTokenSymbol.getText())) {
             throw new ValidationException("Token already exists!");
         }

@@ -13,12 +13,10 @@ import org.aion.base.type.Hash256;
 import org.aion.base.util.ByteArrayWrapper;
 import org.aion.base.util.TypeConverter;
 import org.aion.wallet.connector.BlockchainConnector;
+import org.aion.wallet.connector.TokenManager;
 import org.aion.wallet.connector.dto.*;
 import org.aion.wallet.console.ConsoleManager;
-import org.aion.wallet.dto.AccountDTO;
-import org.aion.wallet.dto.ConnectionDetails;
-import org.aion.wallet.dto.ConnectionProvider;
-import org.aion.wallet.dto.LightAppSettings;
+import org.aion.wallet.dto.*;
 import org.aion.wallet.events.*;
 import org.aion.wallet.exception.NotFoundException;
 import org.aion.wallet.exception.ValidationException;
@@ -50,6 +48,8 @@ public class ApiBlockchainConnector extends BlockchainConnector {
             .r_tx_Init_VALUE, Message.Retcode.r_tx_Recved_VALUE, Message.Retcode.r_tx_NewPending_VALUE, Message
             .Retcode.r_tx_Pending_VALUE, Message.Retcode.r_tx_Included_VALUE);
 
+    private final TokenManager tokenManager;
+
     private final ExecutorService backgroundExecutor;
 
     private LightAppSettings lightAppSettings = getLightweightWalletSettings(ApiType.JAVA);
@@ -67,6 +67,7 @@ public class ApiBlockchainConnector extends BlockchainConnector {
         connect();
         EventPublisher.fireApplicationSettingsChanged(lightAppSettings);
         registerEventBusConsumer();
+        tokenManager = new TokenManager(API);
     }
 
     private int getCores() {
@@ -140,6 +141,11 @@ public class ApiBlockchainConnector extends BlockchainConnector {
     }
 
     @Override
+    public BigInteger getTokenBalance(final String accountAddress, final TokenDetails tokenDetails) throws ValidationException {
+        return new BigInteger(String.valueOf(tokenManager.getBalance(tokenDetails.getContractAddress(), accountAddress)));
+    }
+
+    @Override
     protected TransactionResponseDTO sendTransactionInternal(final SendTransactionDTO dto) throws ValidationException {
         final String fromAddress = dto.getFrom().getPublicAddress();
         final BigInteger latestTransactionNonce = getLatestTransactionNonce(fromAddress);
@@ -155,8 +161,9 @@ public class ApiBlockchainConnector extends BlockchainConnector {
         final MsgRsp response;
         lock();
         try {
-            ConsoleManager.addLog("Sending transaction", ConsoleManager.LogType.TRANSACTION, ConsoleManager.LogLevel
-                    .INFO);
+            ConsoleManager.addLog(
+                    "Sending transaction", ConsoleManager.LogType.TRANSACTION, ConsoleManager.LogLevel.INFO
+            );
             response = API.getTx().sendRawTransaction(ByteArrayWrapper.wrap(encodedTransaction)).getObject();
         } finally {
             unLock();

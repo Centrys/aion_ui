@@ -8,6 +8,7 @@ import org.aion.base.util.TypeConverter;
 import org.aion.wallet.connector.BlockchainConnector;
 import org.aion.wallet.connector.dto.*;
 import org.aion.wallet.dto.LightAppSettings;
+import org.aion.wallet.dto.TokenDetails;
 import org.aion.wallet.events.AccountEvent;
 import org.aion.wallet.events.EventBusFactory;
 import org.aion.wallet.events.EventPublisher;
@@ -43,6 +44,11 @@ public class CoreBlockchainConnector extends BlockchainConnector {
             log.error(e.getMessage(), e);
             return BigInteger.ZERO;
         }
+    }
+
+    @Override
+    public BigInteger getTokenBalance(final String accountAddress, final TokenDetails tokenDetails) {
+        throw new UnsupportedOperationException();
     }
 
     @Override

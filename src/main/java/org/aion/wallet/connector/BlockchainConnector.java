@@ -144,6 +144,8 @@ public abstract class BlockchainConnector {
 
     public abstract BigInteger getBalance(final String address);
 
+    public abstract BigInteger getTokenBalance(final String accountAddress, final TokenDetails tokenDetails) throws ValidationException;
+
     public abstract TransactionDTO getTransaction(final String txHash) throws NotFoundException;
 
     public abstract Set<TransactionDTO> getLatestTransactions(final String address);
@@ -156,14 +158,19 @@ public abstract class BlockchainConnector {
 
     public abstract LightAppSettings getSettings();
 
-    public final TransactionResponseDTO sendTransaction(final SendTransactionDTO dto) throws ValidationException {
-        if (dto == null || !dto.validate()) {
+
+    public TransactionResponseDTO sendAionToken(final SendTransactionDTO transactionWithToken) throws ValidationException {
+        return sendTransaction(transactionWithToken);
+    }
+
+    public final TransactionResponseDTO sendTransaction(final SendTransactionDTO transactionWrapper) throws ValidationException {
+        if (transactionWrapper == null || !transactionWrapper.validate()) {
             throw new ValidationException("Invalid transaction request data");
         }
-        if (dto.estimateValue().compareTo(getBalance(dto.getFrom().getPublicAddress())) >= 0) {
+        if (transactionWrapper.estimateValue().compareTo(getBalance(transactionWrapper.getFrom().getPublicAddress())) >= 0) {
             throw new ValidationException("Insufficient funds");
         }
-        return sendTransactionInternal(dto);
+        return sendTransactionInternal(transactionWrapper);
     }
 
     protected abstract TransactionResponseDTO sendTransactionInternal(final SendTransactionDTO dto) throws ValidationException;

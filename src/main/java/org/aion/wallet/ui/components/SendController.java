@@ -7,7 +7,6 @@ import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.*;
-import javafx.scene.image.Image;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import org.aion.api.impl.internal.Message;
@@ -18,6 +17,7 @@ import org.aion.wallet.connector.dto.SendTransactionDTO;
 import org.aion.wallet.connector.dto.TransactionResponseDTO;
 import org.aion.wallet.console.ConsoleManager;
 import org.aion.wallet.dto.AccountDTO;
+import org.aion.wallet.dto.TokenDetails;
 import org.aion.wallet.events.*;
 import org.aion.wallet.exception.ValidationException;
 import org.aion.wallet.log.WalletLoggerFactory;
@@ -44,7 +44,7 @@ public class SendController extends AbstractController {
 
     private static final Tooltip NRG_PRICE_TOOLTIP = new Tooltip("Energy price expressed in nAmp");
 
-    private static final Tooltip AMOUNT_TOOLTIP = new Tooltip("This is the amount that the address specified above will recieve");
+    private static final Tooltip AMOUNT_TOOLTIP = new Tooltip("This is the amount that the address specified above will receive");
 
     private final BlockchainConnector blockchainConnector = BlockchainConnector.getInstance();
     private final TransactionResubmissionDialog transactionResubmissionDialog = new TransactionResubmissionDialog();
@@ -67,7 +67,7 @@ public class SendController extends AbstractController {
     @FXML
     private Button sendButton;
     @FXML
-    private Label timedoutTransactionsLabel;
+    private Label timedOutTransactionsLabel;
     @FXML
     private ComboBox<String> currencySelect;
 
@@ -133,7 +133,7 @@ public class SendController extends AbstractController {
                 break;
             default:
         }
-        setTimedoutTransactionsLabelText();
+        setTimedOutTransactionsLabelText();
     }
 
     @FXML
@@ -247,7 +247,7 @@ public class SendController extends AbstractController {
     }
 
     private void handleTransactionFinished(final TransactionResponseDTO response) {
-        setTimedoutTransactionsLabelText();
+        setTimedOutTransactionsLabelText();
         final String error = response.getError();
         if (error != null) {
             final String failReason;
@@ -299,19 +299,19 @@ public class SendController extends AbstractController {
         valueInput.setText("");
         passwordInput.setText("");
 
-        setTimedoutTransactionsLabelText();
+        setTimedOutTransactionsLabelText();
     }
 
-    private void setTimedoutTransactionsLabelText() {
+    private void setTimedOutTransactionsLabelText() {
         if (account != null) {
-            final List<SendTransactionDTO> timedoutTransactions = blockchainConnector.getAccountManager().getTimedOutTransactions(account.getPublicAddress());
-            if (!timedoutTransactions.isEmpty()) {
-                timedoutTransactionsLabel.setVisible(true);
-                timedoutTransactionsLabel.getStyleClass().add("warning-link-style");
-                timedoutTransactionsLabel.setText("You have transactions that require your attention!");
+            final List<SendTransactionDTO> timedOutTransactions = blockchainConnector.getAccountManager().getTimedOutTransactions(account.getPublicAddress());
+            if (!timedOutTransactions.isEmpty()) {
+                timedOutTransactionsLabel.setVisible(true);
+                timedOutTransactionsLabel.getStyleClass().add("warning-link-style");
+                timedOutTransactionsLabel.setText("You have transactions that require your attention!");
             }
         } else {
-            timedoutTransactionsLabel.setVisible(false);
+            timedOutTransactionsLabel.setVisible(false);
         }
     }
 
@@ -346,10 +346,9 @@ public class SendController extends AbstractController {
     private ObservableList<String> getCurrencySymbols(AccountDTO account) {
         ObservableList<String> result = FXCollections.observableArrayList();
 
-        List<String> coinSymbols = new ArrayList<>(Collections.singleton(account.getCurrency()));
-        List<String> tokenSymbols = blockchainConnector.getAccountTokenDetails(account.getPublicAddress()).stream().map(p -> p.getSymbol()).collect(Collectors.toList());
+        List<String> tokenSymbols = blockchainConnector.getAccountTokenDetails(account.getPublicAddress()).stream().map(TokenDetails::getSymbol).collect(Collectors.toList());
 
-        result.addAll(coinSymbols);
+        result.addAll(account.getCurrency());
         result.add("-----");
         result.addAll(tokenSymbols);
         return result;
@@ -371,7 +370,7 @@ public class SendController extends AbstractController {
         nrgPriceInput.setText(String.valueOf(sendTransaction.getNrgPrice()));
         valueInput.setText(BalanceUtils.formatBalance(sendTransaction.getValue()));
         txStatusLabel.setText("");
-        timedoutTransactionsLabel.setVisible(false);
+        timedOutTransactionsLabel.setVisible(false);
         transactionToResubmit = sendTransaction;
     }
 
@@ -421,21 +420,24 @@ public class SendController extends AbstractController {
     }
 
     private void checkCurrencySelect() throws ValidationException {
-        if(!currencySelect.getSelectionModel().getSelectedItem().equals(account.getCurrency())) {
-            List<String> tokenList = blockchainConnector.getAccountTokenDetails(account.getPublicAddress()).stream().map(p -> p.getSymbol()).collect(Collectors.toList());
-            if(!tokenList.contains(currencySelect.getSelectionModel().getSelectedItem())) {
+        final String tokenSymbol = currencySelect.getSelectionModel().getSelectedItem();
+        if (!tokenSymbol.equals(account.getCurrency())) {
+            final List<TokenDetails> tokenDetails = blockchainConnector.getAccountTokenDetails(account.getPublicAddress());
+            final Optional<TokenDetails> matchingTokenOptional = tokenDetails.stream()
+                    .filter(t -> tokenSymbol.equals(t.getSymbol()))
+                    .findFirst();
+            if (!matchingTokenOptional.isPresent()) {
                 throw new ValidationException("The selected currency is not valid!");
-            }
-
-            if(getTokenBalance(currencySelect.getSelectionModel().getSelectedItem()) <= 0) {
-                throw new ValidationException("There are not enough " + currencySelect.getSelectionModel().getSelectedItem() + " tokens");
+            } else {
+                if (getTokenBalance(matchingTokenOptional.get()).compareTo(getValue()) < 0) {
+                    throw new ValidationException("There are not enough " + tokenSymbol + " tokens");
+                }
             }
         }
     }
 
-    private int getTokenBalance(String selectedItem) {
-        //TODO: check the token balance against the contract
-        return 0;
+    private BigInteger getTokenBalance(TokenDetails tokenAddress) throws ValidationException {
+        return blockchainConnector.getTokenBalance(account.getPublicAddress(), tokenAddress);
     }
 
     private void checkAddress() throws ValidationException {
