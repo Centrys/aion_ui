@@ -20,6 +20,13 @@ public class EventPublisher {
         }
     }
 
+    public static void fireOpenTokenBalances(final String accountAddress) {
+        if (accountAddress != null) {
+            EventBusFactory.getBus(UiMessageEvent.ID)
+                    .post(new UiMessageEvent(UiMessageEvent.Type.TOKEN_BALANCES, accountAddress));
+        }
+    }
+
     public static void fireAccountAdded(final AccountDTO account) {
         if (account != null) {
             EventBusFactory.getBus(AccountEvent.ID).post(new AccountEvent(AccountEvent.Type.ADDED, account));

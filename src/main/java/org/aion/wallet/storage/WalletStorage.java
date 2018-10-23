@@ -181,6 +181,17 @@ public class WalletStorage {
         return result;
     }
 
+    public final void saveToken(final TokenDetails newTokenDetails) {
+        if(newTokenDetails != null) {
+            tokenProperties.put(newTokenDetails.getSymbol(), newTokenDetails.serialized());
+            saveTokenProperties();
+        }
+    }
+
+    public final void saveTokenProperties() {
+        savePropertiesToFile(tokenProperties, TOKENS_FILE);
+    }
+
     public String getMasterAccountMnemonic(final String password) throws ValidationException {
         if (password == null || password.equalsIgnoreCase("")) {
             throw new ValidationException("Password is not valid");
@@ -224,17 +235,6 @@ public class WalletStorage {
         } else {
             throw new ValidationException("Cannot increment derivation when master account is missing");
         }
-    }
-
-    public final void saveToken(final TokenDetails newTokenDetails) {
-        if(newTokenDetails != null) {
-            tokenProperties.put(newTokenDetails.getSymbol(), newTokenDetails.serialized());
-            saveTokenProperties();
-        }
-    }
-
-    public final void saveTokenProperties() {
-        savePropertiesToFile(tokenProperties, TOKENS_FILE);
     }
 
     public final LightAppSettings getLightAppSettings(final ApiType type) {

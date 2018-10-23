@@ -5,25 +5,27 @@ import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.event.Event;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
+import javafx.stage.Popup;
 import org.aion.api.log.LogEnum;
 import org.aion.wallet.connector.BlockchainConnector;
 import org.aion.wallet.dto.AccountDTO;
 import org.aion.wallet.events.*;
 import org.aion.wallet.log.WalletLoggerFactory;
-import org.aion.wallet.ui.components.partials.TokenBalanceController;
 import org.aion.wallet.util.BalanceUtils;
 import org.aion.wallet.util.UIUtils;
 import org.aion.wallet.util.URLManager;
 import org.slf4j.Logger;
 
+import java.io.IOException;
 import java.math.BigInteger;
 import java.net.URL;
 import java.util.EnumSet;
@@ -64,8 +66,6 @@ public class HeaderPaneControls extends AbstractController {
 
     @FXML
     private HBox toggleTokenBalance;
-
-    private TokenBalanceController tokenBalancePane = new TokenBalanceController();
 
     private String accountAddress = "";
 
@@ -160,7 +160,8 @@ public class HeaderPaneControls extends AbstractController {
             runApiTask(
                     getBalanceTask,
                     evt -> updateNewBalance(currency, getBalanceTask.getValue()),
-                    getErrorEvent(t -> {}, getBalanceTask),
+                    getErrorEvent(t -> {
+                    }, getBalanceTask),
                     getEmptyEvent()
             );
         }
@@ -175,6 +176,27 @@ public class HeaderPaneControls extends AbstractController {
     }
 
     public void openTokenBalance(MouseEvent mouseEvent) {
-        tokenBalancePane.open(mouseEvent);
+        Popup popup = new Popup();
+        popup.setAutoHide(true);
+        popup.setAutoFix(true);
+
+        Pane tokenBalanceDialog;
+        try {
+            tokenBalanceDialog = FXMLLoader.load(getClass().getResource("partials/TokenBalance.fxml"));
+        } catch (IOException e) {
+            log.error(e.getMessage(), e);
+            return;
+        }
+
+        Node eventSource = (Node) mouseEvent.getSource();
+        final double windowX = eventSource.getScene().getWindow().getX();
+        final double windowY = eventSource.getScene().getWindow().getY();
+        popup.setX(windowX + eventSource.getScene().getWidth() / 1.07 - tokenBalanceDialog.getPrefWidth() / 1.07);
+        popup.setY(windowY + eventSource.getScene().getHeight() / 4.75 - tokenBalanceDialog.getPrefHeight() / 4.75);
+        popup.getContent().addAll(tokenBalanceDialog);
+        popup.show(eventSource.getScene().getWindow());
+
+        EventPublisher.fireOpenTokenBalances(accountAddress);
     }
+
 }
