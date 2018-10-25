@@ -1,6 +1,7 @@
 package org.aion.wallet.ui.components.partials;
 
 import com.google.common.eventbus.Subscribe;
+import com.google.zxing.common.StringUtils;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -14,20 +15,27 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import net.sf.antcontrib.property.Num;
 import org.aion.api.log.LogEnum;
 import org.aion.wallet.connector.BlockchainConnector;
 import org.aion.wallet.dto.TokenDetails;
 import org.aion.wallet.events.AccountEvent;
 import org.aion.wallet.events.EventBusFactory;
+import org.aion.wallet.events.EventPublisher;
 import org.aion.wallet.events.UiMessageEvent;
+import org.aion.wallet.exception.ValidationException;
 import org.aion.wallet.log.WalletLoggerFactory;
+import org.aion.wallet.util.AddressUtils;
 import org.slf4j.Logger;
 
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 public class TokenBalanceController implements Initializable {
     private static final Logger log = WalletLoggerFactory.getLogger(LogEnum.WLT.name());
@@ -50,6 +58,8 @@ public class TokenBalanceController implements Initializable {
     @FXML
     private TextField customTokenDecimals;
     @FXML
+    private Label customTokenValidation;
+    @FXML
     private ScrollPane tokenBalancesScrollPane;
 
     private String accountAddress;
@@ -71,7 +81,7 @@ public class TokenBalanceController implements Initializable {
 
     @Subscribe
     private void handleOpenRequest(final UiMessageEvent event) {
-        if (UiMessageEvent.Type.TOKEN_BALANCES.equals(event.getType())) {
+        if (UiMessageEvent.Type.TOKEN_BALANCES_SHOW.equals(event.getType())) {
             accountAddress = event.getMessage();
             backgroundExecutor.submit(() -> Platform.runLater(this::displayListOfBalances));
         }
@@ -128,10 +138,27 @@ public class TokenBalanceController implements Initializable {
         customTokenContractAddress.setText("");
         customTokenSymbol.setText("");
         customTokenDecimals.setText("");
+
+        customTokenValidation.setVisible(false);
+        customTokenValidation.setText("");
     }
 
     public void saveCustomToken(MouseEvent mouseEvent) {
-        TokenDetails newToken = new TokenDetails(customTokenContractAddress.getText(), customTokenSymbol.getText(), Integer.valueOf(customTokenDecimals.getText()));
+        customTokenValidation.setVisible(false);
+        customTokenValidation.setText("");
+
+        try {
+            checkTokenContractAddress();
+            checkTokenSymbol();
+            checkTokenDecimals();
+        }
+        catch (ValidationException exception) {
+            customTokenValidation.setVisible(true);
+            customTokenValidation.setText(exception.getMessage());
+            return;
+        }
+
+        TokenDetails newToken = new TokenDetails(customTokenContractAddress.getText(), customTokenSymbol.getText(), Double.valueOf(customTokenDecimals.getText()));
         blockchainConnector.saveToken(newToken);
         blockchainConnector.addAccountToken(accountAddress, newToken.getSymbol());
 
@@ -144,6 +171,41 @@ public class TokenBalanceController implements Initializable {
         customTokenDecimals.setText("");
 
         reloadTokenList();
+
+        EventPublisher.fireTokenAdded(mouseEvent);
+    }
+
+    private void checkTokenContractAddress() throws ValidationException{
+        //TODO check that the contract address is valid
+        if(!AddressUtils.isValid(customTokenContractAddress.getText())) {
+            throw new ValidationException("The contract address is not valid!");
+        }
+    }
+
+    private void checkTokenSymbol() throws ValidationException{
+        //TODO check that the symbol is the actual symbol for this contract address
+        if(customTokenSymbol.getText() == null || customTokenSymbol.getText().isEmpty()) {
+            throw new ValidationException("The provided token symbol is not valid!");
+        }
+        ArrayList coinSymbols = new ArrayList<>(Collections.singleton("AION"));
+        List<String> tokenSymbols = blockchainConnector.getAccountTokenDetails(accountAddress).stream().map(p -> p.getSymbol()).collect(Collectors.toList());
+        if(coinSymbols.contains(customTokenSymbol.getText()) || tokenSymbols.contains(customTokenSymbol.getText())) {
+            throw new ValidationException("Token already exists!");
+        }
+    }
+
+    private void checkTokenDecimals() throws ValidationException{
+        if(customTokenDecimals.getText() == null || customTokenDecimals.getText().isEmpty()) {
+            throw new ValidationException("Token decimals has to be a number!");
+        }
+        else {
+            try {
+                Double.parseDouble(customTokenDecimals.getText());
+            }
+            catch (NumberFormatException e) {
+                throw new ValidationException("Token decimals has to be a number!");
+            }
+        }
     }
 
     private void reloadTokenList() {

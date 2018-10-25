@@ -1,6 +1,8 @@
 package org.aion.wallet.ui.components;
 
 import com.google.common.eventbus.Subscribe;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
@@ -25,9 +27,8 @@ import org.slf4j.Logger;
 
 import java.math.BigInteger;
 import java.net.URL;
-import java.util.List;
-import java.util.Optional;
-import java.util.ResourceBundle;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class SendController extends AbstractController {
 
@@ -67,6 +68,8 @@ public class SendController extends AbstractController {
     private Button sendButton;
     @FXML
     private Label timedoutTransactionsLabel;
+    @FXML
+    private ComboBox<String> currencySelect;
 
     private AccountDTO account;
     private boolean connected;
@@ -78,6 +81,7 @@ public class SendController extends AbstractController {
         EventBusFactory.getBus(HeaderPaneButtonEvent.ID).register(this);
         EventBusFactory.getBus(AccountEvent.ID).register(this);
         EventBusFactory.getBus(TransactionEvent.ID).register(this);
+        EventBusFactory.getBus(UiMessageEvent.ID).register(this);
     }
 
     @Override
@@ -323,6 +327,9 @@ public class SendController extends AbstractController {
                 accountBalance.setVisible(true);
                 setAccountBalanceText();
             }
+            currencySelect.setDisable(false);
+            currencySelect.setItems(getCurrencySymbols(account));
+            currencySelect.getSelectionModel().select(0);
         } else if (AccountEvent.Type.LOCKED.equals(event.getType())) {
             if (account.equals(this.account)) {
                 this.account = null;
@@ -332,7 +339,20 @@ public class SendController extends AbstractController {
                 setDefaults();
                 txStatusLabel.setText("");
             }
+            currencySelect.setDisable(true);
         }
+    }
+
+    private ObservableList<String> getCurrencySymbols(AccountDTO account) {
+        ObservableList<String> result = FXCollections.observableArrayList();
+
+        List<String> coinSymbols = new ArrayList<>(Collections.singleton(account.getCurrency()));
+        List<String> tokenSymbols = blockchainConnector.getAccountTokenDetails(account.getPublicAddress()).stream().map(p -> p.getSymbol()).collect(Collectors.toList());
+
+        result.addAll(coinSymbols);
+        result.add("-----");
+        result.addAll(tokenSymbols);
+        return result;
     }
 
     @Subscribe
@@ -353,6 +373,13 @@ public class SendController extends AbstractController {
         txStatusLabel.setText("");
         timedoutTransactionsLabel.setVisible(false);
         transactionToResubmit = sendTransaction;
+    }
+
+    @Subscribe
+    private void handleTokenAddedEvent(final UiMessageEvent event) {
+        currencySelect.getItems().clear();
+        currencySelect.setItems(getCurrencySymbols(account));
+        currencySelect.getSelectionModel().select(0);
     }
 
     private void setAccountBalanceText() {
@@ -388,7 +415,27 @@ public class SendController extends AbstractController {
 
         final BigInteger value = getValue();
 
+        checkCurrencySelect();
+
         return new SendTransactionDTO(account, toInput.getText(), nrg, nrgPrice, value);
+    }
+
+    private void checkCurrencySelect() throws ValidationException {
+        if(!currencySelect.getSelectionModel().getSelectedItem().equals(account.getCurrency())) {
+            List<String> tokenList = blockchainConnector.getAccountTokenDetails(account.getPublicAddress()).stream().map(p -> p.getSymbol()).collect(Collectors.toList());
+            if(!tokenList.contains(currencySelect.getSelectionModel().getSelectedItem())) {
+                throw new ValidationException("The selected currency is not valid!");
+            }
+
+            if(getTokenBalance(currencySelect.getSelectionModel().getSelectedItem()) <= 0) {
+                throw new ValidationException("There are not enough " + currencySelect.getSelectionModel().getSelectedItem() + " tokens");
+            }
+        }
+    }
+
+    private int getTokenBalance(String selectedItem) {
+        //TODO: check the token balance against the contract
+        return 0;
     }
 
     private void checkAddress() throws ValidationException {

@@ -23,7 +23,7 @@ public class EventPublisher {
     public static void fireOpenTokenBalances(final String accountAddress) {
         if (accountAddress != null) {
             EventBusFactory.getBus(UiMessageEvent.ID)
-                    .post(new UiMessageEvent(UiMessageEvent.Type.TOKEN_BALANCES, accountAddress));
+                    .post(new UiMessageEvent(UiMessageEvent.Type.TOKEN_BALANCES_SHOW, accountAddress));
         }
     }
 
@@ -104,5 +104,9 @@ public class EventPublisher {
 
     public static void fireLedgerAccountSelected(final InputEvent eventSource) {
         EventBusFactory.getBus(UiMessageEvent.ID).post(new UiMessageEvent(UiMessageEvent.Type.LEDGER_ACCOUNT_SELECTED, eventSource));
+    }
+
+    public static void fireTokenAdded(final InputEvent eventSource) {
+        EventBusFactory.getBus(UiMessageEvent.ID).post(new UiMessageEvent(UiMessageEvent.Type.TOKEN_ADDED, eventSource));
     }
 }

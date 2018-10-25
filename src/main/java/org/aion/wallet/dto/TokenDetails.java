@@ -3,9 +3,9 @@ package org.aion.wallet.dto;
 public class TokenDetails {
     private final String contractAddress;
     private final String symbol;
-    private final int decimals;
+    private final double decimals;
 
-    public TokenDetails(final String contractAddress, final String symbol, final int decimals) {
+    public TokenDetails(final String contractAddress, final String symbol, final double decimals) {
         this.contractAddress = contractAddress;
         this.symbol = symbol;
         this.decimals = decimals;
@@ -16,7 +16,7 @@ public class TokenDetails {
             final String[] split = serializedDetails.split(":");
             this.contractAddress = split[0];
             this.symbol = split[1];
-            this.decimals = Integer.valueOf(split[2]);
+            this.decimals = Double.valueOf(split[2]);
         }
         catch (Exception e) {
             throw new IllegalArgumentException("Invalid connection string: " + serializedDetails, e);
@@ -31,7 +31,7 @@ public class TokenDetails {
         return symbol;
     }
 
-    public int getDecimals() {
+    public double getDecimals() {
         return decimals;
     }
 

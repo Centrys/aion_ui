@@ -27,7 +27,7 @@
             <Label text="Token balances" styleClass="token-balance-label" onMouseClicked="#close"/>
         </HBox>
         <ScrollPane fx:id="tokenBalancesScrollPane" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" styleClass="custom-scrollbar" style="-fx-background-color: white; -fx-background-insets: 0; -fx-border-insets: 0; -fx-border-color: white; -fx-border-width: 0;">
-            <VBox fx:id="tokenBalances" spacing="10" prefHeight="205" style="-fx-background-color: white;"/>
+            <VBox fx:id="tokenBalances" spacing="10" prefHeight="190" style="-fx-background-color: white;"/>
         </ScrollPane>
     </VBox>
 
@@ -39,6 +39,7 @@
             <Button text="Save" onMouseClicked="#saveCustomToken"/>
             <Button text="Cancel" onMouseClicked="#cancelCustomToken"/>
         </HBox>
+        <Label fx:id="customTokenValidation" visible="false" style="-fx-text-fill: red;"/>
     </VBox>
 
     <Label fx:id="customTokenLink" text="+ Add custom token" AnchorPane.leftAnchor="5" AnchorPane.topAnchor="275" styleClass="link" onMouseClicked="#addCustomToken"/>

@@ -50,7 +50,8 @@
                     </Pane>
                 </HBox>
                 <HBox spacing="5">
-                    <TextField fx:id="valueInput" promptText="Amount to send" styleClass="input-fields" onKeyPressed="#valuePressed" prefWidth="360"/>
+                    <TextField fx:id="valueInput" promptText="Amount to send" styleClass="input-fields" onKeyPressed="#valuePressed" prefWidth="260"/>
+                    <ComboBox fx:id="currencySelect" prefHeight="30" prefWidth="95"/>
                     <Pane id="amountInfoPane" onMouseEntered="#showInfoTooltip" onMouseExited="#hideInfoTooltip">
                         <ImageView preserveRatio="true" fitHeight="20" translateY="5">
                             <Image url="@../icons/more-info-icon.png"/>
