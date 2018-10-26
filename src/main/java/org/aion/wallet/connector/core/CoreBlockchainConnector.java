@@ -52,6 +52,11 @@ public class CoreBlockchainConnector extends BlockchainConnector {
     }
 
     @Override
+    public byte[] getTokenSendData(final String tokenAddress, final String accountAddress, final String destinationAddress, final BigInteger value) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     protected TransactionResponseDTO sendTransactionInternal(final SendTransactionDTO dto) {
         throw new UnsupportedOperationException();
         //TODO

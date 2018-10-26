@@ -145,6 +145,10 @@ public class ApiBlockchainConnector extends BlockchainConnector {
         return new BigInteger(String.valueOf(tokenManager.getBalance(tokenDetails.getContractAddress(), accountAddress)));
     }
 
+    public byte[] getTokenSendData(final String tokenAddress, final String accountAddress, final String destinationAddress, final BigInteger value) {
+        return tokenManager.getEncodedSendTokenData(tokenAddress, accountAddress, destinationAddress, value);
+    }
+
     @Override
     protected TransactionResponseDTO sendTransactionInternal(final SendTransactionDTO dto) throws ValidationException {
         final String fromAddress = dto.getFrom().getPublicAddress();

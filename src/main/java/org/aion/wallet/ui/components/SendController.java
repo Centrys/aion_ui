@@ -27,7 +27,9 @@ import org.slf4j.Logger;
 
 import java.math.BigInteger;
 import java.net.URL;
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
 public class SendController extends AbstractController {
@@ -384,7 +386,6 @@ public class SendController extends AbstractController {
     private void setAccountBalanceText() {
         accountBalance.setText(account.getFormattedBalance() + " " + AionConstants.CCY);
         UIUtils.setWidth(accountBalance);
-
     }
 
     private void refreshAccountBalance() {
@@ -398,8 +399,7 @@ public class SendController extends AbstractController {
                     account.setBalance(getBalanceTask.getValue());
                     setAccountBalanceText();
                 },
-                getErrorEvent(t -> {
-                }, getBalanceTask),
+                getErrorEvent(t -> {}, getBalanceTask),
                 getEmptyEvent()
         );
     }
@@ -414,12 +414,18 @@ public class SendController extends AbstractController {
 
         final BigInteger value = getValue();
 
-        checkCurrencySelect();
+        final Optional<TokenDetails> tokenDetailsOptional = getTokenDetailsOptional();
 
-        return new SendTransactionDTO(account, toInput.getText(), nrg, nrgPrice, value);
+        return tokenDetailsOptional.map(
+                tokenDetails -> {
+                    final String tokenAddress = tokenDetails.getContractAddress();
+                    final byte[] sendData = blockchainConnector.getTokenSendData(tokenAddress, account.getPublicAddress(), toInput.getText(), value);
+                    return new SendTransactionDTO(account, tokenAddress, nrg, nrgPrice, BigInteger.ZERO, sendData);
+                })
+                .orElseGet(() -> new SendTransactionDTO(account, toInput.getText(), nrg, nrgPrice, value));
     }
 
-    private void checkCurrencySelect() throws ValidationException {
+    private Optional<TokenDetails> getTokenDetailsOptional() throws ValidationException {
         final String tokenSymbol = currencySelect.getSelectionModel().getSelectedItem();
         if (!tokenSymbol.equals(account.getCurrency())) {
             final List<TokenDetails> tokenDetails = blockchainConnector.getAccountTokenDetails(account.getPublicAddress());
@@ -431,8 +437,12 @@ public class SendController extends AbstractController {
             } else {
                 if (getTokenBalance(matchingTokenOptional.get()).compareTo(getValue()) < 0) {
                     throw new ValidationException("There are not enough " + tokenSymbol + " tokens");
+                } else {
+                    return matchingTokenOptional;
                 }
             }
+        } else {
+            return Optional.ofNullable(null);
         }
     }
 

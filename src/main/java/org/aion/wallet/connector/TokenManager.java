@@ -86,7 +86,7 @@ public class TokenManager {
         return org.aion.api.sol.impl.Address.copyFrom(TypeConverter.StringHexToByteArray(accountAddress));
     }
 
-    public final ByteArrayWrapper getEncodedSendTokenData(
+    public final byte[] getEncodedSendTokenData(
             final String tokenAddress,
             final String accountAddress,
             final String destinationAddress,
@@ -97,7 +97,8 @@ public class TokenManager {
                 .setParam(getApiAddress(destinationAddress))
                 .setParam(getUint(value))
                 .setParam(Bytes.copyFrom(ByteArrayWrapper.NULL_BYTE))
-                .build().getEncodedData();
+                .build().getEncodedData()
+                .getData();
     }
 
     private org.aion.api.sol.impl.Uint getUint(BigInteger nr) {
