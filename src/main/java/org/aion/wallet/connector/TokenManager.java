@@ -4,12 +4,11 @@ import org.aion.api.IAionAPI;
 import org.aion.api.IContract;
 import org.aion.api.IContractController;
 import org.aion.api.impl.internal.ApiUtils;
-import org.aion.api.sol.impl.Bytes;
+import org.aion.api.sol.impl.DynamicBytes;
 import org.aion.api.sol.impl.Uint;
 import org.aion.api.type.ApiMsg;
 import org.aion.api.type.ContractResponse;
 import org.aion.base.type.Address;
-import org.aion.base.util.ByteArrayWrapper;
 import org.aion.base.util.TypeConverter;
 import org.aion.wallet.exception.ValidationException;
 
@@ -28,13 +27,15 @@ public class TokenManager {
     private static final String NAME = "name";
     private static final String SYMBOL = "symbol";
     private static final String ABI_JSON = "token_abi.json";
-    private final IContractController contractController;
+    private static final long TX_NRG_PRICE = 10000000000L;
+    private static final long TX_NRG_LIMIT = 1700000L;
 
     private final Map<Address, IContract> addressToContract = new HashMap<>();
+    private final IContractController contractController;
     private final String abiDescription;
 
     public TokenManager(final IAionAPI api) {
-        contractController = api.getContractController();
+        this.contractController = api.getContractController();
         this.abiDescription = getAbiDescription();
     }
 
@@ -53,37 +54,32 @@ public class TokenManager {
     }
 
     public final String getName(final String tokenAddress, final String accountAddress) throws ValidationException {
-        final IContract contract = getContractAtAddress(tokenAddress, accountAddress);
+        final IContract contract = getTokenAtAddress(tokenAddress, accountAddress);
         final ApiMsg nameResponse = contract.newFunction(NAME).build().execute();
         if (nameResponse.isError()) {
             throw new ValidationException(nameResponse.getErrString());
         }
-        return nameResponse.getObject();
+        return getTypeResponse(nameResponse);
     }
 
     public final String getSymbol(final String tokenAddress, final String accountAddress) throws ValidationException {
-        final IContract contract = getContractAtAddress(tokenAddress, accountAddress);
+        final IContract contract = getTokenAtAddress(tokenAddress, accountAddress);
         final ApiMsg symbolResponse = contract.newFunction(SYMBOL).build().execute();
         if (symbolResponse.isError()) {
             throw new ValidationException(symbolResponse.getErrString());
         }
-        return (String) ((ContractResponse) symbolResponse.getObject()).getData().get(0);
+        return getTypeResponse(symbolResponse);
     }
 
     public final BigInteger getBalance(final String tokenAddress, final String accountAddress) throws ValidationException {
-        final IContract contract = getContractAtAddress(tokenAddress, accountAddress);
+        final IContract contract = getTokenAtAddress(tokenAddress, accountAddress);
         final ApiMsg balanceOf = contract.newFunction(BALANCE)
                 .setParam(getApiAddress(accountAddress))
                 .build().execute();
         if (balanceOf.isError()) {
             throw new ValidationException(balanceOf.getErrString());
         }
-        ContractResponse contractResponse = balanceOf.getObject();
-        return TypeConverter.StringHexToBigInteger(TypeConverter.toJsonHex((byte[]) contractResponse.getData().get(0)));
-    }
-
-    private org.aion.api.sol.impl.Address getApiAddress(final String accountAddress) {
-        return org.aion.api.sol.impl.Address.copyFrom(TypeConverter.StringHexToByteArray(accountAddress));
+        return getBigIntegerResponse(balanceOf);
     }
 
     public final byte[] getEncodedSendTokenData(
@@ -92,13 +88,28 @@ public class TokenManager {
             final String destinationAddress,
             final BigInteger value
     ) {
-        final IContract contract = getContractAtAddress(tokenAddress, accountAddress);
+        final IContract contract = getTokenAtAddress(tokenAddress, accountAddress);
         return contract.newFunction(SEND)
                 .setParam(getApiAddress(destinationAddress))
                 .setParam(getUint(value))
-                .setParam(Bytes.copyFrom(ByteArrayWrapper.NULL_BYTE))
+                .setParam(DynamicBytes.copyFrom("".getBytes()))
+                .setFrom(Address.wrap(accountAddress))
+                .setTxNrgLimit(TX_NRG_LIMIT)
+                .setTxNrgPrice(TX_NRG_PRICE)
                 .build().getEncodedData()
                 .getData();
+    }
+
+    private BigInteger getBigIntegerResponse(final ApiMsg balanceOf) {
+        return TypeConverter.StringHexToBigInteger(TypeConverter.toJsonHex((byte[]) getTypeResponse(balanceOf)));
+    }
+
+    private <T> T getTypeResponse(final ApiMsg nameResponse) {
+        return (T) ((ContractResponse) nameResponse.getObject()).getData().get(0);
+    }
+
+    private org.aion.api.sol.impl.Address getApiAddress(final String accountAddress) {
+        return org.aion.api.sol.impl.Address.copyFrom(TypeConverter.StringHexToByteArray(accountAddress));
     }
 
     private org.aion.api.sol.impl.Uint getUint(BigInteger nr) {
@@ -109,7 +120,7 @@ public class TokenManager {
         }
     }
 
-    private IContract getContractAtAddress(final String tokenAddressString, final String accountAddressString) {
+    private IContract getTokenAtAddress(final String tokenAddressString, final String accountAddressString) {
         final Address tokenAddress = Address.wrap(tokenAddressString);
         final Address accountAddress = Address.wrap(accountAddressString);
         return addressToContract.computeIfAbsent(tokenAddress, s -> contractController.getContractAt(accountAddress, tokenAddress, abiDescription));

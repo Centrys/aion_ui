@@ -378,9 +378,11 @@ public class SendController extends AbstractController {
 
     @Subscribe
     private void handleTokenAddedEvent(final UiMessageEvent event) {
-        currencySelect.getItems().clear();
-        currencySelect.setItems(getCurrencySymbols(account));
-        currencySelect.getSelectionModel().select(0);
+        if (UiMessageEvent.Type.TOKEN_ADDED.equals(event.getType())) {
+            currencySelect.getItems().clear();
+            currencySelect.setItems(getCurrencySymbols(account));
+            currencySelect.getSelectionModel().select(0);
+        }
     }
 
     private void setAccountBalanceText() {
@@ -442,12 +444,12 @@ public class SendController extends AbstractController {
                 }
             }
         } else {
-            return Optional.ofNullable(null);
+            return Optional.empty();
         }
     }
 
     private BigInteger getTokenBalance(TokenDetails tokenAddress) throws ValidationException {
-        return blockchainConnector.getTokenBalance(account.getPublicAddress(), tokenAddress);
+        return blockchainConnector.getTokenBalance(tokenAddress.getContractAddress(), account.getPublicAddress());
     }
 
     private void checkAddress() throws ValidationException {

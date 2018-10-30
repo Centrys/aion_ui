@@ -10,7 +10,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.input.InputEvent;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -23,21 +22,21 @@ import org.aion.wallet.events.EventPublisher;
 import org.aion.wallet.events.UiMessageEvent;
 import org.aion.wallet.exception.ValidationException;
 import org.aion.wallet.log.WalletLoggerFactory;
-import org.aion.wallet.util.AddressUtils;
 import org.aion.wallet.util.BalanceUtils;
 import org.slf4j.Logger;
 
+import java.math.BigInteger;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
 
 public class TokenBalanceController implements Initializable {
     private static final Logger log = WalletLoggerFactory.getLogger(LogEnum.WLT.name());
+    private static final int DISPLAY_DECIMALS = 6;
+    private static final String ROW = "transaction-row";
+    private static final String ROW_TEXT = "transaction-row-text";
 
     private final ExecutorService backgroundExecutor = Executors.newSingleThreadExecutor();
     private final BlockchainConnector blockchainConnector = BlockchainConnector.getInstance();
@@ -53,10 +52,6 @@ public class TokenBalanceController implements Initializable {
     @FXML
     private TextField customTokenContractAddress;
     @FXML
-    private TextField customTokenSymbol;
-    @FXML
-    private TextField customTokenDecimals;
-    @FXML
     private Label customTokenValidation;
     @FXML
     private ScrollPane tokenBalancesScrollPane;
@@ -64,7 +59,7 @@ public class TokenBalanceController implements Initializable {
     private String accountAddress;
 
     @Override
-    public void initialize(URL location, ResourceBundle resources) {
+    public void initialize(final URL location, final ResourceBundle resources) {
         registerEventBusConsumer();
     }
 
@@ -91,136 +86,98 @@ public class TokenBalanceController implements Initializable {
         EventBusFactory.getBus(UiMessageEvent.ID).register(this);
     }
 
-    public void close(InputEvent eventSource) {
+    public void close(final InputEvent eventSource) {
         ((Node) eventSource.getSource()).getScene().getWindow().hide();
     }
 
-
     private void displayListOfBalances() {
-        List<TokenDetails> accountTokenDetails = blockchainConnector.getAccountTokenDetails(accountAddress);
+        final List<TokenDetails> accountTokenDetails = blockchainConnector.getAccountTokenDetails(accountAddress);
         if (accountTokenDetails.size() > 0) {
             tokenBalancesScrollPane.setVisible(true);
             for (TokenDetails tokenDetails : accountTokenDetails) {
-                HBox row = new HBox();
-                row.setSpacing(10);
-                row.setAlignment(Pos.CENTER_LEFT);
-                row.setPrefWidth(290);
-                row.getStyleClass().add("transaction-row");
-
-                Label tokenSymbol = new Label(tokenDetails.getSymbol());
-                tokenSymbol.setPrefWidth(70);
-                tokenSymbol.getStyleClass().add("transaction-row-text");
-                row.getChildren().add(tokenSymbol);
-
-                String balance = null;
-                try {
-                    balance = BalanceUtils.formatBalanceWithNumberOfDecimals(
-                            blockchainConnector.getTokenBalance(accountAddress, tokenDetails), 6
-                    );
-                } catch (ValidationException e) {
-                    log.error(e.getMessage());
-                }
-                Label tokenBalance = new Label(balance);
-                tokenBalance.getStyleClass().add("transaction-row-text");
-                row.getChildren().add(tokenBalance);
-
-                tokenBalances.getChildren().add(row);
+                tokenBalances.getChildren().add(getTokenRow(tokenDetails));
             }
         } else {
             tokenBalancesScrollPane.setVisible(false);
         }
     }
 
-    public void addCustomToken(MouseEvent mouseEvent) {
+    private HBox getTokenRow(final TokenDetails tokenDetails) {
+        final HBox row = new HBox();
+        row.setSpacing(10);
+        row.setAlignment(Pos.CENTER_LEFT);
+        row.setPrefWidth(290);
+        row.getStyleClass().add(ROW);
+
+        final Label tokenSymbol = getSymbolLabel(tokenDetails);
+        final Label labelBalance = getBalanceLabel(tokenDetails);
+
+        row.getChildren().add(tokenSymbol);
+        row.getChildren().add(labelBalance);
+        return row;
+    }
+
+    private Label getSymbolLabel(final TokenDetails tokenDetails) {
+        Label tokenSymbol = new Label(tokenDetails.getSymbol());
+        tokenSymbol.setPrefWidth(70);
+        tokenSymbol.getStyleClass().add(ROW_TEXT);
+        return tokenSymbol;
+    }
+
+    private Label getBalanceLabel(final TokenDetails tokenDetails) {
+        BigInteger tokenBalance;
+        try {
+            tokenBalance = blockchainConnector.getTokenBalance(tokenDetails.getContractAddress(), accountAddress);
+        } catch (ValidationException e) {
+            log.error(e.getMessage());
+            tokenBalance = BigInteger.ZERO;
+        }
+        final String balance = BalanceUtils.formatBalanceWithNumberOfDecimals(tokenBalance, DISPLAY_DECIMALS);
+        final Label labelBalance = new Label(balance);
+        labelBalance.getStyleClass().add(ROW_TEXT);
+        return labelBalance;
+    }
+
+    public void addCustomToken() {
         tokenBalancePane.setPrefHeight(400);
         customTokenForm.setVisible(true);
         customTokenLink.setVisible(false);
     }
 
-    public void cancelCustomToken(MouseEvent mouseEvent) {
+    public void cancelCustomToken() {
+        tokenBalancePane.setPrefHeight(300);
         customTokenForm.setVisible(false);
         customTokenLink.setVisible(true);
-        tokenBalancePane.setPrefHeight(300);
 
         customTokenContractAddress.setText("");
-        customTokenSymbol.setText("");
-        customTokenDecimals.setText("");
 
-        customTokenValidation.setVisible(false);
-        customTokenValidation.setText("");
+        resetValidationError();
     }
 
-    public void saveCustomToken(MouseEvent mouseEvent) {
-        customTokenValidation.setVisible(false);
-        customTokenValidation.setText("");
+    public void saveCustomToken() {
+        resetValidationError();
 
         try {
-            checkTokenContractAddress();
-            checkTokenSymbol();
-            checkTokenDecimals();
-        }
-        catch (ValidationException exception) {
+            final TokenDetails newToken = blockchainConnector.getTokenDetails(customTokenContractAddress.getText(), accountAddress);
+            blockchainConnector.saveToken(newToken);
+            blockchainConnector.addAccountToken(accountAddress, newToken.getSymbol());
+
+            reloadTokenList();
+            EventPublisher.fireTokenAdded(newToken.getContractAddress());
+            cancelCustomToken();
+        } catch (ValidationException exception) {
             customTokenValidation.setVisible(true);
             customTokenValidation.setText(exception.getMessage());
-            return;
-        }
-
-        TokenDetails newToken = new TokenDetails(
-                customTokenContractAddress.getText(),
-                customTokenSymbol.getText(),
-                Integer.parseInt(customTokenDecimals.getText())
-        );
-        blockchainConnector.saveToken(newToken);
-        blockchainConnector.addAccountToken(accountAddress, newToken.getSymbol());
-
-        tokenBalancePane.setPrefHeight(300);
-        customTokenForm.setVisible(false);
-        customTokenLink.setVisible(true);
-
-        customTokenContractAddress.setText("");
-        customTokenSymbol.setText("");
-        customTokenDecimals.setText("");
-
-        reloadTokenList();
-
-        EventPublisher.fireTokenAdded(mouseEvent);
-    }
-
-    private void checkTokenContractAddress() throws ValidationException{
-        //TODO check that the contract address is valid
-        if(!AddressUtils.isValid(customTokenContractAddress.getText())) {
-            throw new ValidationException("The contract address is not valid!");
-        }
-    }
-
-    private void checkTokenSymbol() throws ValidationException{
-        //TODO check that the symbol is the actual symbol for this contract address
-        if(customTokenSymbol.getText() == null || customTokenSymbol.getText().isEmpty()) {
-            throw new ValidationException("The provided token symbol is not valid!");
-        }
-        ArrayList coinSymbols = new ArrayList<>(Collections.singleton("AION"));
-        List<String> tokenSymbols = blockchainConnector.getAccountTokenDetails(accountAddress).stream().map(TokenDetails::getSymbol).collect(Collectors.toList());
-        if(coinSymbols.contains(customTokenSymbol.getText()) || tokenSymbols.contains(customTokenSymbol.getText())) {
-            throw new ValidationException("Token already exists!");
-        }
-    }
-
-    private void checkTokenDecimals() throws ValidationException{
-        if(customTokenDecimals.getText() == null || customTokenDecimals.getText().isEmpty()) {
-            throw new ValidationException("Token decimals has to be a number!");
-        }
-        else {
-            try {
-                Double.parseDouble(customTokenDecimals.getText());
-            }
-            catch (NumberFormatException e) {
-                throw new ValidationException("Token decimals has to be a number!");
-            }
         }
     }
 
     private void reloadTokenList() {
         tokenBalances.getChildren().clear();
         displayListOfBalances();
+    }
+
+    private void resetValidationError() {
+        customTokenValidation.setVisible(false);
+        customTokenValidation.setText("");
     }
 }

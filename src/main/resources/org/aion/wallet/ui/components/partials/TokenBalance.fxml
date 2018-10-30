@@ -26,15 +26,15 @@
             </ImageView>
             <Label text="Token balances" styleClass="token-balance-label" onMouseClicked="#close"/>
         </HBox>
-        <ScrollPane fx:id="tokenBalancesScrollPane" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" styleClass="custom-scrollbar" style="-fx-background-color: white; -fx-background-insets: 0; -fx-border-insets: 0; -fx-border-color: white; -fx-border-width: 0;">
+        <ScrollPane fx:id="tokenBalancesScrollPane" hbarPolicy="NEVER" styleClass="custom-scrollbar"
+                    style="-fx-background-color: white; -fx-background-insets: 0; -fx-border-insets: 0; -fx-border-color: white; -fx-border-width: 0;">
             <VBox fx:id="tokenBalances" spacing="10" prefHeight="190" style="-fx-background-color: white;"/>
         </ScrollPane>
     </VBox>
 
     <VBox fx:id="customTokenForm" AnchorPane.bottomAnchor="5" AnchorPane.leftAnchor="5" spacing="5" prefWidth="300" visible="false">
+        <Label text="Token Address"/>
         <TextField fx:id="customTokenContractAddress" promptText="Contract address"/>
-        <TextField fx:id="customTokenSymbol" promptText="Symbol"/>
-        <TextField fx:id="customTokenDecimals" promptText="Decimals"/>
         <HBox spacing="10">
             <Button text="Save" onMouseClicked="#saveCustomToken"/>
             <Button text="Cancel" onMouseClicked="#cancelCustomToken"/>

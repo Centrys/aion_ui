@@ -51,6 +51,7 @@ public class WalletStorage {
     private static final String TOKENS_FILE;
 
     private static final String WALLET_FILE;
+    private static final String DELIM = ":";
 
     static {
         String storageDir = System.getProperty("local.storage.dir");
@@ -154,9 +155,9 @@ public class WalletStorage {
     }
 
     public Set<String> getAccountTokens(final String address) {
-        Object s = accountsProperties.get(address + ACCOUNT_TOKENS_PROP);
-        if(s != null) {
-            return new HashSet<>(Arrays.asList(s.toString().split(":")));
+        final String serializedTokens = (String) accountsProperties.get(address + ACCOUNT_TOKENS_PROP);
+        if (serializedTokens != null && !serializedTokens.isEmpty()) {
+            return new HashSet<>(Arrays.asList(serializedTokens.split(DELIM)));
         }
         return new HashSet<>();
     }
@@ -164,9 +165,8 @@ public class WalletStorage {
     public void addAccountToken(final String address, final String tokenSymbol) {
         if(address != null && tokenSymbol != null) {
             Set<String> accountTokens = getAccountTokens(address);
-            if(!accountTokens.contains(tokenSymbol)) {
-                accountTokens.add(tokenSymbol);
-                accountsProperties.setProperty(address + ACCOUNT_TOKENS_PROP, String.join(":", accountTokens));
+            if (accountTokens.add(tokenSymbol)) {
+                accountsProperties.setProperty(address + ACCOUNT_TOKENS_PROP, String.join(DELIM, accountTokens));
                 saveAccounts();
             }
         }
@@ -174,9 +174,9 @@ public class WalletStorage {
 
     public List<TokenDetails> getAccountTokenDetails(final String address) {
         List<TokenDetails> result = new ArrayList<>();
-        for(String accountToken : getAccountTokens(address)) {
-            String serializedTokenDetails = String.valueOf(tokenProperties.get(accountToken));
-            result.add(new TokenDetails(serializedTokenDetails));
+        for(String tokenSymbol : getAccountTokens(address)) {
+            String serializedTokenDetails = String.valueOf(tokenProperties.get(tokenSymbol));
+            result.add(new TokenDetails(tokenSymbol, serializedTokenDetails));
         }
         return result;
     }

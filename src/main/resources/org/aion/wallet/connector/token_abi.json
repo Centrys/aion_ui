@@ -1,6 +1,30 @@
 [
   {
     "outputs": [],
+    "payable": false,
+    "inputs": [
+      {
+        "name": "_name",
+        "type": "string"
+      },
+      {
+        "name": "_symbol",
+        "type": "string"
+      },
+      {
+        "name": "_granularity",
+        "type": "uint128"
+      },
+      {
+        "name": "_initialSupply",
+        "type": "uint128"
+      }
+    ],
+    "name": "",
+    "type": "constructor"
+  },
+  {
+    "outputs": [],
     "constant": false,
     "payable": false,
     "inputs": [
@@ -29,88 +53,13 @@
     "outputs": [
       {
         "name": "",
-        "type": "uint128"
+        "type": "string"
       }
     ],
     "constant": true,
     "payable": false,
     "inputs": [],
-    "name": "liquidSupply",
-    "type": "function"
-  },
-  {
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint128"
-      }
-    ],
-    "constant": false,
-    "payable": false,
-    "inputs": [
-      {
-        "name": "a",
-        "type": "uint128"
-      },
-      {
-        "name": "b",
-        "type": "uint128"
-      }
-    ],
-    "name": "safeAdd",
-    "type": "function"
-  },
-  {
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint128"
-      }
-    ],
-    "constant": true,
-    "payable": false,
-    "inputs": [],
-    "name": "totalSupply",
-    "type": "function"
-  },
-  {
-    "outputs": [
-      {
-        "name": "",
-        "type": "bytes16"
-      }
-    ],
-    "constant": true,
-    "payable": false,
-    "inputs": [
-      {
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "balances",
-    "type": "function"
-  },
-  {
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint128"
-      }
-    ],
-    "constant": false,
-    "payable": false,
-    "inputs": [
-      {
-        "name": "a",
-        "type": "uint128"
-      },
-      {
-        "name": "b",
-        "type": "uint128"
-      }
-    ],
-    "name": "safeSub",
+    "name": "symbol",
     "type": "function"
   },
   {
@@ -126,6 +75,127 @@
     "name": "granularity",
     "type": "function"
   },
+  {
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint128"
+      }
+    ],
+    "constant": true,
+    "payable": false,
+    "inputs": [],
+    "name": "totalSupply",
+    "type": "function"
+  },
+
+  {
+    "outputs": [
+      {
+        "name": "",
+        "type": "bytes16"
+      }
+    ],
+    "constant": true,
+    "payable": false,
+    "inputs": [
+      {
+        "name": "_tokenHolder",
+        "type": "address"
+      }
+    ],
+    "name": "balanceOf",
+    "type": "function"
+  },
+  {
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "constant": true,
+    "payable": false,
+    "inputs": [
+      {
+        "name": "_operator",
+        "type": "address"
+      },
+      {
+        "name": "_tokenHolder",
+        "type": "address"
+      }
+    ],
+    "name": "isOperatorFor",
+    "type": "function"
+  },
+
+  {
+    "outputs": [],
+    "constant": false,
+    "payable": false,
+    "inputs": [
+      {
+        "name": "_operator",
+        "type": "address"
+      }
+    ],
+    "name": "authorizeOperator",
+    "type": "function"
+  },
+  {
+    "outputs": [],
+    "constant": false,
+    "payable": false,
+    "inputs": [
+      {
+        "name": "_operator",
+        "type": "address"
+      }
+    ],
+    "name": "revokeOperator",
+    "type": "function"
+  },
+
+  {
+    "outputs": [],
+    "constant": false,
+    "payable": false,
+    "inputs": [
+      {
+        "name": "_to",
+        "type": "address"
+      },
+      {
+        "name": "_amount",
+        "type": "uint128"
+      },
+      {
+        "name": "_userData",
+        "type": "bytes"
+      }
+    ],
+    "name": "send",
+    "type": "function"
+  },
+  {
+    "outputs": [],
+    "constant": false,
+    "payable": false,
+    "inputs": [
+      {
+        "name": "_amount",
+        "type": "uint128"
+      },
+      {
+        "name": "_holderData",
+        "type": "bytes"
+      }
+    ],
+    "name": "burn",
+    "type": "function"
+  },
+
   {
     "outputs": [],
     "constant": false,
@@ -156,123 +226,42 @@
     "type": "function"
   },
   {
-    "outputs": [
-      {
-        "name": "",
-        "type": "bytes16"
-      }
-    ],
-    "constant": true,
-    "payable": false,
-    "inputs": [
-      {
-        "name": "_tokenHolder",
-        "type": "address"
-      }
-    ],
-    "name": "balanceOf",
-    "type": "function"
-  },
-  {
     "outputs": [],
     "constant": false,
     "payable": false,
     "inputs": [
       {
-        "name": "localSender",
+        "name": "from",
         "type": "address"
-      },
-      {
-        "name": "remoteRecipient",
-        "type": "bytes32"
       },
       {
         "name": "amount",
         "type": "uint128"
       },
       {
-        "name": "bridgeId",
-        "type": "bytes32"
+        "name": "senderData",
+        "type": "bytes"
       },
       {
-        "name": "localData",
+        "name": "operatorData",
         "type": "bytes"
       }
     ],
-    "name": "operatorFreeze",
+    "name": "operatorBurn",
     "type": "function"
   },
-  {
-    "outputs": [],
-    "constant": false,
-    "payable": false,
-    "inputs": [
-      {
-        "name": "remoteRecipient",
-        "type": "bytes32"
-      },
-      {
-        "name": "amount",
-        "type": "uint128"
-      },
-      {
-        "name": "bridgeId",
-        "type": "bytes32"
-      },
-      {
-        "name": "localData",
-        "type": "bytes"
-      }
-    ],
-    "name": "freeze",
-    "type": "function"
-  },
-  {
-    "outputs": [],
-    "constant": false,
-    "payable": false,
-    "inputs": [
-      {
-        "name": "_operator",
-        "type": "address"
-      }
-    ],
-    "name": "authorizeOperator",
-    "type": "function"
-  },
+
   {
     "outputs": [
       {
         "name": "",
-        "type": "string"
+        "type": "uint128"
       }
     ],
     "constant": true,
     "payable": false,
     "inputs": [],
-    "name": "symbol",
-    "type": "function"
-  },
-  {
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint128"
-      }
-    ],
-    "constant": false,
-    "payable": false,
-    "inputs": [
-      {
-        "name": "a",
-        "type": "uint128"
-      },
-      {
-        "name": "b",
-        "type": "uint128"
-      }
-    ],
-    "name": "safeDiv",
+    "name": "liquidSupply",
     "type": "function"
   },
   {
@@ -313,72 +302,28 @@
     "type": "function"
   },
   {
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint128"
-      }
-    ],
-    "constant": false,
-    "payable": false,
-    "inputs": [
-      {
-        "name": "a",
-        "type": "uint128"
-      },
-      {
-        "name": "b",
-        "type": "uint128"
-      }
-    ],
-    "name": "safeMul",
-    "type": "function"
-  },
-  {
     "outputs": [],
     "constant": false,
     "payable": false,
     "inputs": [
       {
-        "name": "from",
-        "type": "address"
+        "name": "remoteRecipient",
+        "type": "bytes32"
       },
       {
         "name": "amount",
         "type": "uint128"
       },
       {
-        "name": "senderData",
-        "type": "bytes"
+        "name": "bridgeId",
+        "type": "bytes32"
       },
       {
-        "name": "operatorData",
+        "name": "localData",
         "type": "bytes"
       }
     ],
-    "name": "operatorBurn",
-    "type": "function"
-  },
-  {
-    "outputs": [
-      {
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "constant": true,
-    "payable": false,
-    "inputs": [
-      {
-        "name": "_operator",
-        "type": "address"
-      },
-      {
-        "name": "_tokenHolder",
-        "type": "address"
-      }
-    ],
-    "name": "isOperatorFor",
+    "name": "freeze",
     "type": "function"
   },
   {
@@ -387,101 +332,30 @@
     "payable": false,
     "inputs": [
       {
-        "name": "_to",
+        "name": "localSender",
         "type": "address"
       },
       {
-        "name": "_amount",
+        "name": "remoteRecipient",
+        "type": "bytes32"
+      },
+      {
+        "name": "amount",
         "type": "uint128"
       },
       {
-        "name": "_userData",
+        "name": "bridgeId",
+        "type": "bytes32"
+      },
+      {
+        "name": "localData",
         "type": "bytes"
       }
     ],
-    "name": "send",
+    "name": "operatorFreeze",
     "type": "function"
   },
-  {
-    "outputs": [],
-    "constant": false,
-    "payable": false,
-    "inputs": [
-      {
-        "name": "_amount",
-        "type": "uint128"
-      },
-      {
-        "name": "_holderData",
-        "type": "bytes"
-      }
-    ],
-    "name": "burn",
-    "type": "function"
-  },
-  {
-    "outputs": [],
-    "constant": false,
-    "payable": false,
-    "inputs": [
-      {
-        "name": "_operator",
-        "type": "address"
-      }
-    ],
-    "name": "revokeOperator",
-    "type": "function"
-  },
-  {
-    "outputs": [],
-    "payable": false,
-    "inputs": [
-      {
-        "name": "_name",
-        "type": "string"
-      },
-      {
-        "name": "_symbol",
-        "type": "string"
-      },
-      {
-        "name": "_granularity",
-        "type": "uint128"
-      },
-      {
-        "name": "_initialSupply",
-        "type": "uint128"
-      }
-    ],
-    "name": "",
-    "type": "constructor"
-  },
-  {
-    "outputs": [],
-    "inputs": [
-      {
-        "indexed": false,
-        "name": "log",
-        "type": "string"
-      }
-    ],
-    "name": "Logger",
-    "anonymous": false,
-    "type": "event"
-  },
-  {
-    "outputs": [],
-    "inputs": [
-      {
-        "indexed": false,
-        "name": "value",
-        "type": "uint128"
-      }
-    ],
-    "name": "LoggerUint",
-    "anonymous": false,
-    "type": "event"
-  },
+
   {
     "outputs": [],
     "inputs": [

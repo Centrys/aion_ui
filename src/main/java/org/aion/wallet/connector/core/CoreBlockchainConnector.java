@@ -13,6 +13,7 @@ import org.aion.wallet.events.AccountEvent;
 import org.aion.wallet.events.EventBusFactory;
 import org.aion.wallet.events.EventPublisher;
 import org.aion.wallet.exception.NotFoundException;
+import org.aion.wallet.exception.ValidationException;
 import org.aion.wallet.log.WalletLoggerFactory;
 import org.aion.wallet.storage.ApiType;
 import org.aion.wallet.util.AionConstants;
@@ -47,12 +48,17 @@ public class CoreBlockchainConnector extends BlockchainConnector {
     }
 
     @Override
-    public BigInteger getTokenBalance(final String accountAddress, final TokenDetails tokenDetails) {
+    public BigInteger getTokenBalance(final String tokenAddress, final String accountAddress) {
         throw new UnsupportedOperationException();
     }
 
     @Override
     public byte[] getTokenSendData(final String tokenAddress, final String accountAddress, final String destinationAddress, final BigInteger value) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public TokenDetails getTokenDetails(final String tokenAddress, final String accountAddress) throws ValidationException {
         throw new UnsupportedOperationException();
     }
 

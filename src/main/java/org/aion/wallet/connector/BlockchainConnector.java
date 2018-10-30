@@ -144,9 +144,11 @@ public abstract class BlockchainConnector {
 
     public abstract BigInteger getBalance(final String address);
 
-    public abstract BigInteger getTokenBalance(final String accountAddress, final TokenDetails tokenDetails) throws ValidationException;
+    public abstract BigInteger getTokenBalance(final String tokenAddress, final String accountAddress) throws ValidationException;
 
     public abstract byte[] getTokenSendData(final String tokenAddress, final String accountAddress, final String destinationAddress, final BigInteger value);
+
+    public abstract TokenDetails getTokenDetails(final String tokenAddress, final String accountAddress) throws ValidationException;
 
     public abstract TransactionDTO getTransaction(final String txHash) throws NotFoundException;
 

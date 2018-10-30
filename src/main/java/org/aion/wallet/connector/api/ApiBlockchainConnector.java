@@ -22,6 +22,7 @@ import org.aion.wallet.exception.NotFoundException;
 import org.aion.wallet.exception.ValidationException;
 import org.aion.wallet.log.WalletLoggerFactory;
 import org.aion.wallet.storage.ApiType;
+import org.aion.wallet.util.AddressUtils;
 import org.aion.wallet.util.AionConstants;
 import org.slf4j.Logger;
 
@@ -88,7 +89,7 @@ public class ApiBlockchainConnector extends BlockchainConnector {
         connect(getConnectionDetails());
     }
 
-    public void connect(final ConnectionDetails newConnectionDetails) {
+    private void connect(final ConnectionDetails newConnectionDetails) {
         connectionDetails = newConnectionDetails;
         if (connectionFuture != null) {
             if (!connectionFuture.isDone()) {
@@ -98,11 +99,17 @@ public class ApiBlockchainConnector extends BlockchainConnector {
         connectionFuture = backgroundExecutor.submit(() -> {
             final String connectionKey = newConnectionDetails.getSecureKey();
             Platform.runLater(() -> EventPublisher.fireConnectAttmpted(newConnectionDetails.isSecureConnection()));
-            final ApiMsg connect = API.connect(newConnectionDetails.toConnectionString(), true, 1, 60_000,
-                    connectionKey);
+            final ApiMsg connect = API.connect(
+                    newConnectionDetails.toConnectionString(),
+                    true,
+                    1,
+                    60_000,
+                    connectionKey
+            );
             if (connect.getObject()) {
-                Platform.runLater(() -> EventPublisher.fireConnectionEstablished(newConnectionDetails
-                        .isSecureConnection()));
+                Platform.runLater(
+                        () -> EventPublisher.fireConnectionEstablished(newConnectionDetails.isSecureConnection())
+                );
                 final Block latestBlock = getLatestBlock();
                 startingBlock = Math.max(0, latestBlock.getNumber() - 30 * BLOCK_BATCH_SIZE);
                 processTransactionsOnReconnect();
@@ -141,12 +148,22 @@ public class ApiBlockchainConnector extends BlockchainConnector {
     }
 
     @Override
-    public BigInteger getTokenBalance(final String accountAddress, final TokenDetails tokenDetails) throws ValidationException {
-        return new BigInteger(String.valueOf(tokenManager.getBalance(tokenDetails.getContractAddress(), accountAddress)));
+    public BigInteger getTokenBalance(final String tokenAddress, final String accountAddress) throws ValidationException {
+        return new BigInteger(String.valueOf(tokenManager.getBalance(tokenAddress, accountAddress)));
     }
 
     public byte[] getTokenSendData(final String tokenAddress, final String accountAddress, final String destinationAddress, final BigInteger value) {
         return tokenManager.getEncodedSendTokenData(tokenAddress, accountAddress, destinationAddress, value);
+    }
+
+    @Override
+    public TokenDetails getTokenDetails(final String tokenAddress, final String accountAddress) throws ValidationException {
+        if (!AddressUtils.isValid(tokenAddress)) {
+            throw new ValidationException("The contract address is not valid!");
+        }
+        final String name = tokenManager.getName(tokenAddress, accountAddress);
+        final String symbol = tokenManager.getSymbol(tokenAddress, accountAddress);
+        return new TokenDetails(tokenAddress, name, symbol);
     }
 
     @Override
