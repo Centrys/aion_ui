@@ -4,6 +4,7 @@ import com.google.common.eventbus.Subscribe;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.*;
@@ -12,6 +13,7 @@ import javafx.scene.input.MouseEvent;
 import org.aion.api.impl.internal.Message;
 import org.aion.api.log.LogEnum;
 import org.aion.base.util.TypeConverter;
+import org.aion.mcf.vm.Constants;
 import org.aion.wallet.connector.BlockchainConnector;
 import org.aion.wallet.connector.dto.SendTransactionDTO;
 import org.aion.wallet.connector.dto.TransactionResponseDTO;
@@ -48,10 +50,12 @@ public class SendController extends AbstractController {
 
     private static final Tooltip AMOUNT_TOOLTIP = new Tooltip("This is the amount that the address specified above will receive");
 
+    private static final String SEPARATOR = "-----";
+
     private final BlockchainConnector blockchainConnector = BlockchainConnector.getInstance();
+
     private final TransactionResubmissionDialog transactionResubmissionDialog = new TransactionResubmissionDialog();
-    @FXML
-    private PasswordField passwordInput;
+
     @FXML
     private TextField toInput;
     @FXML
@@ -102,10 +106,6 @@ public class SendController extends AbstractController {
         nrgPriceInput.setTooltip(NRG_PRICE_TOOLTIP);
         valueInput.setTooltip(AMOUNT_TOOLTIP);
         setDefaults();
-        if (!ConfigUtils.isEmbedded()) {
-            passwordInput.setVisible(false);
-            passwordInput.setManaged(false);
-        }
 
         toInput.textProperty().addListener(event -> transactionToResubmit = null);
 
@@ -294,12 +294,11 @@ public class SendController extends AbstractController {
     }
 
     private void setDefaults() {
-        nrgInput.setText(AionConstants.DEFAULT_NRG);
+        nrgInput.setText(String.valueOf(Constants.NRG_TRANSACTION));
         nrgPriceInput.setText(AionConstants.DEFAULT_NRG_PRICE.toString());
 
         toInput.setText("");
         valueInput.setText("");
-        passwordInput.setText("");
 
         setTimedOutTransactionsLabelText();
     }
@@ -348,10 +347,9 @@ public class SendController extends AbstractController {
     private ObservableList<String> getCurrencySymbols(AccountDTO account) {
         ObservableList<String> result = FXCollections.observableArrayList();
 
-        List<String> tokenSymbols = blockchainConnector.getAccountTokenDetails(account.getPublicAddress()).stream().map(TokenDetails::getSymbol).collect(Collectors.toList());
-
-        result.addAll(account.getCurrency());
-        result.add("-----");
+        List<String> tokenSymbols = getTokens(account);
+        result.add(account.getCurrency());
+        result.add(SEPARATOR);
         result.addAll(tokenSymbols);
         return result;
     }
@@ -383,6 +381,10 @@ public class SendController extends AbstractController {
             currencySelect.setItems(getCurrencySymbols(account));
             currencySelect.getSelectionModel().select(0);
         }
+    }
+
+    private List<String> getTokens(final AccountDTO account) {
+        return blockchainConnector.getAccountTokenDetails(account.getPublicAddress()).stream().map(TokenDetails::getSymbol).collect(Collectors.toList());
     }
 
     private void setAccountBalanceText() {
@@ -422,9 +424,17 @@ public class SendController extends AbstractController {
                 tokenDetails -> {
                     final String tokenAddress = tokenDetails.getContractAddress();
                     final byte[] sendData = blockchainConnector.getTokenSendData(tokenAddress, account.getPublicAddress(), toInput.getText(), value);
-                    return new SendTransactionDTO(account, tokenAddress, nrg, nrgPrice, BigInteger.ZERO, sendData);
+                    final long estimatedNrg = getEstimatedNrg(sendData);
+                    return new SendTransactionDTO(account, tokenAddress, estimatedNrg, nrgPrice, BigInteger.ZERO, sendData);
                 })
                 .orElseGet(() -> new SendTransactionDTO(account, toInput.getText(), nrg, nrgPrice, value));
+    }
+
+    private long getEstimatedNrg(final byte[] sendData) {
+        final long zeroes = zeroBytesInData(sendData);
+        final long nonZeroes = nonZeroBytesInData(sendData);
+        final long energy = Constants.NRG_TRANSACTION + zeroes * Constants.NRG_TX_DATA_ZERO + nonZeroes * Constants.NRG_TX_DATA_NONZERO;
+        return (Math.floorDiv(energy, 1000) + 1) * 1000;
     }
 
     private Optional<TokenDetails> getTokenDetailsOptional() throws ValidationException {
@@ -528,6 +538,36 @@ public class SendController extends AbstractController {
             case "amountInfoPane":
                 AMOUNT_TOOLTIP.hide();
                 break;
+        }
+    }
+
+    private long nonZeroBytesInData(final byte[] data) {
+        int total = (data == null) ? 0 : data.length;
+
+        return total - zeroBytesInData(data);
+    }
+
+    private long zeroBytesInData(final byte[] data) {
+        if (data == null) {
+            return 0;
+        }
+
+        int zeroes = 0;
+        for (byte b : data) {
+            zeroes += (b == 0) ? 1 : 0;
+        }
+        return zeroes;
+    }
+
+    @FXML
+    private void coinChanged(final ActionEvent actionEvent) {
+        final String selectedItem = currencySelect.getSelectionModel().getSelectedItem();
+        if (SEPARATOR.equals(selectedItem)) {
+            nrgInput.setText("");
+        } else if (getTokens(account).contains(selectedItem)) {
+            nrgInput.setText(String.valueOf(AionConstants.DEFAULT_TOKEN_NRG));
+        } else {
+            nrgInput.setText(String.valueOf(AionConstants.DEFAULT_NRG));
         }
     }
 }

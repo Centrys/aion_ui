@@ -1,5 +1,7 @@
 package org.aion.wallet.dto;
 
+import org.aion.wallet.exception.ValidationException;
+
 public class TokenDetails {
     private final String contractAddress;
     private final String name;
@@ -11,7 +13,7 @@ public class TokenDetails {
         this.symbol = symbol;
     }
 
-    public TokenDetails(final String symbol, final String serializedDetails) {
+    public TokenDetails(final String symbol, final String serializedDetails) throws ValidationException {
         this.symbol = symbol;
         try {
             final String[] split = serializedDetails.split(":");
@@ -19,7 +21,7 @@ public class TokenDetails {
             this.name = split[1];
         }
         catch (Exception e) {
-            throw new IllegalArgumentException("Invalid token serialization: " + serializedDetails, e);
+            throw new ValidationException(e);
         }
     }
 

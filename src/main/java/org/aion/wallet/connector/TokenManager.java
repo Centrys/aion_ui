@@ -4,13 +4,15 @@ import org.aion.api.IAionAPI;
 import org.aion.api.IContract;
 import org.aion.api.IContractController;
 import org.aion.api.impl.internal.ApiUtils;
-import org.aion.api.sol.impl.DynamicBytes;
+import org.aion.api.sol.IDynamicBytes;
 import org.aion.api.sol.impl.Uint;
 import org.aion.api.type.ApiMsg;
 import org.aion.api.type.ContractResponse;
 import org.aion.base.type.Address;
+import org.aion.base.util.ByteUtil;
 import org.aion.base.util.TypeConverter;
 import org.aion.wallet.exception.ValidationException;
+import org.aion.wallet.util.AionConstants;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -27,8 +29,6 @@ public class TokenManager {
     private static final String NAME = "name";
     private static final String SYMBOL = "symbol";
     private static final String ABI_JSON = "token_abi.json";
-    private static final long TX_NRG_PRICE = 10000000000L;
-    private static final long TX_NRG_LIMIT = 1700000L;
 
     private final Map<Address, IContract> addressToContract = new HashMap<>();
     private final IContractController contractController;
@@ -54,32 +54,35 @@ public class TokenManager {
     }
 
     public final String getName(final String tokenAddress, final String accountAddress) throws ValidationException {
-        final IContract contract = getTokenAtAddress(tokenAddress, accountAddress);
-        final ApiMsg nameResponse = contract.newFunction(NAME).build().execute();
-        if (nameResponse.isError()) {
-            throw new ValidationException(nameResponse.getErrString());
-        }
-        return getTypeResponse(nameResponse);
+        return callFunctionWithoutParams(tokenAddress, accountAddress, NAME, "No Token Name found");
     }
 
     public final String getSymbol(final String tokenAddress, final String accountAddress) throws ValidationException {
+        return callFunctionWithoutParams(tokenAddress, accountAddress, SYMBOL, "No Token Symbol found");
+    }
+
+    private String callFunctionWithoutParams(String tokenAddress, String accountAddress, String functionName, String noDataErrorString) throws ValidationException {
         final IContract contract = getTokenAtAddress(tokenAddress, accountAddress);
-        final ApiMsg symbolResponse = contract.newFunction(SYMBOL).build().execute();
-        if (symbolResponse.isError()) {
-            throw new ValidationException(symbolResponse.getErrString());
+        final ApiMsg nameResponse = contract.newFunction(functionName).build().execute();
+        if (nameResponse.isError()) {
+            throw new ValidationException(nameResponse.getErrString());
         }
-        return getTypeResponse(symbolResponse);
+        final String name = getTypeResponse(nameResponse.getObject());
+        if (name == null || name.isEmpty()) {
+            throw new ValidationException(noDataErrorString);
+        }
+        return name;
     }
 
     public final BigInteger getBalance(final String tokenAddress, final String accountAddress) throws ValidationException {
         final IContract contract = getTokenAtAddress(tokenAddress, accountAddress);
-        final ApiMsg balanceOf = contract.newFunction(BALANCE)
+        final ApiMsg balanceOfResponse = contract.newFunction(BALANCE)
                 .setParam(getApiAddress(accountAddress))
                 .build().execute();
-        if (balanceOf.isError()) {
-            throw new ValidationException(balanceOf.getErrString());
+        if (balanceOfResponse.isError()) {
+            throw new ValidationException(balanceOfResponse.getErrString());
         }
-        return getBigIntegerResponse(balanceOf);
+        return getBigIntegerResponse(balanceOfResponse.getObject());
     }
 
     public final byte[] getEncodedSendTokenData(
@@ -92,20 +95,25 @@ public class TokenManager {
         return contract.newFunction(SEND)
                 .setParam(getApiAddress(destinationAddress))
                 .setParam(getUint(value))
-                .setParam(DynamicBytes.copyFrom("".getBytes()))
+                .setParam(IDynamicBytes.copyFrom(ByteUtil.EMPTY_BYTE_ARRAY))
                 .setFrom(Address.wrap(accountAddress))
-                .setTxNrgLimit(TX_NRG_LIMIT)
-                .setTxNrgPrice(TX_NRG_PRICE)
+                .setTxNrgLimit(AionConstants.DEFAULT_TOKEN_NRG)
+                .setTxNrgPrice(AionConstants.DEFAULT_NRG_PRICE.longValue())
                 .build().getEncodedData()
                 .getData();
     }
 
-    private BigInteger getBigIntegerResponse(final ApiMsg balanceOf) {
-        return TypeConverter.StringHexToBigInteger(TypeConverter.toJsonHex((byte[]) getTypeResponse(balanceOf)));
+    private BigInteger getBigIntegerResponse(final ContractResponse response) throws ValidationException {
+        final byte[] typeResponse = getTypeResponse(response);
+        return TypeConverter.StringHexToBigInteger(TypeConverter.toJsonHex(typeResponse));
     }
 
-    private <T> T getTypeResponse(final ApiMsg nameResponse) {
-        return (T) ((ContractResponse) nameResponse.getObject()).getData().get(0);
+    private <T> T getTypeResponse(final ContractResponse response) throws ValidationException {
+        try {
+            return (T) response.getData().get(0);
+        } catch (Exception e) {
+            throw new ValidationException(e);
+        }
     }
 
     private org.aion.api.sol.impl.Address getApiAddress(final String accountAddress) {

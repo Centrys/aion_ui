@@ -1,7 +1,10 @@
 package org.aion.wallet.storage;
 
 import org.aion.api.log.LogEnum;
-import org.aion.wallet.dto.*;
+import org.aion.wallet.dto.ConnectionDetails;
+import org.aion.wallet.dto.ConnectionProvider;
+import org.aion.wallet.dto.LightAppSettings;
+import org.aion.wallet.dto.TokenDetails;
 import org.aion.wallet.exception.ValidationException;
 import org.aion.wallet.log.WalletLoggerFactory;
 import org.aion.wallet.util.CryptoUtils;
@@ -13,7 +16,10 @@ import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -22,6 +28,7 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class WalletStorage {
 
@@ -51,6 +58,7 @@ public class WalletStorage {
     private static final String TOKENS_FILE;
 
     private static final String WALLET_FILE;
+
     private static final String DELIM = ":";
 
     static {
@@ -144,29 +152,39 @@ public class WalletStorage {
     }
 
     public String getAccountName(final String address) {
-        return Optional.ofNullable(accountsProperties.get(address + ACCOUNT_NAME_PROP)).map(Object::toString).orElse(BLANK);
+        return Optional.ofNullable(getAccountProperty(address, ACCOUNT_NAME_PROP)).map(Object::toString).orElse(BLANK);
     }
 
     public void setAccountName(final String address, final String accountName) {
         if (address != null && accountName != null) {
-            accountsProperties.setProperty(address + ACCOUNT_NAME_PROP, accountName);
+            setAccountProperty(address, ACCOUNT_NAME_PROP, accountName);
             saveAccounts();
         }
     }
 
-    public Set<String> getAccountTokens(final String address) {
-        final String serializedTokens = (String) accountsProperties.get(address + ACCOUNT_TOKENS_PROP);
+    private Set<String> getAccountTokens(final String address) {
+        final String serializedTokens = (String) getAccountProperty(address, ACCOUNT_TOKENS_PROP);
         if (serializedTokens != null && !serializedTokens.isEmpty()) {
-            return new HashSet<>(Arrays.asList(serializedTokens.split(DELIM)));
+            return Arrays.stream(serializedTokens.split(DELIM)).filter(s -> !s.isEmpty()).collect(Collectors.toCollection(TreeSet::new));
         }
         return new HashSet<>();
+    }
+
+    private Object getAccountProperty(final String address, final String property) {
+        return accountsProperties.get(address + property);
+    }
+
+    private void setAccountProperty(final String address, final String property, final String value) {
+        if (value != null && !value.isEmpty()) {
+            accountsProperties.setProperty(address + property, value);
+        }
     }
 
     public void addAccountToken(final String address, final String tokenSymbol) {
         if(address != null && tokenSymbol != null) {
             Set<String> accountTokens = getAccountTokens(address);
             if (accountTokens.add(tokenSymbol)) {
-                accountsProperties.setProperty(address + ACCOUNT_TOKENS_PROP, String.join(DELIM, accountTokens));
+                setAccountProperty(address, ACCOUNT_TOKENS_PROP, String.join(DELIM, accountTokens));
                 saveAccounts();
             }
         }
@@ -175,10 +193,24 @@ public class WalletStorage {
     public List<TokenDetails> getAccountTokenDetails(final String address) {
         List<TokenDetails> result = new ArrayList<>();
         for(String tokenSymbol : getAccountTokens(address)) {
-            String serializedTokenDetails = String.valueOf(tokenProperties.get(tokenSymbol));
-            result.add(new TokenDetails(tokenSymbol, serializedTokenDetails));
+            final Object tokenDetails = tokenProperties.get(tokenSymbol);
+            if (tokenDetails != null) {
+                String serializedTokenDetails = String.valueOf(tokenDetails);
+                try {
+                    result.add(new TokenDetails(tokenSymbol, serializedTokenDetails));
+                } catch (ValidationException e) {
+                    log.error(e.getMessage(), e);
+                    removeAccountToken(tokenSymbol, address);
+                }
+            }
         }
         return result;
+    }
+
+    private void removeAccountToken(final String tokenSymbol, final String address) {
+        final Set<String> accountTokens = getAccountTokens(address);
+        accountTokens.remove(tokenSymbol);
+        setAccountProperty(address, ACCOUNT_TOKENS_PROP, String.join(DELIM, accountTokens));
     }
 
     public final void saveToken(final TokenDetails newTokenDetails) {
@@ -188,7 +220,7 @@ public class WalletStorage {
         }
     }
 
-    public final void saveTokenProperties() {
+    private void saveTokenProperties() {
         savePropertiesToFile(tokenProperties, TOKENS_FILE);
     }
 
@@ -268,7 +300,7 @@ public class WalletStorage {
         try {
             result = new String(decryptLegacyMnemonic(encryptedMnemonicBytes, password));
             isLegacy = true;
-        } catch (NoSuchAlgorithmException | UnsupportedEncodingException | BadPaddingException | IllegalBlockSizeException | InvalidKeyException | NoSuchPaddingException e) {
+        } catch (NoSuchAlgorithmException | BadPaddingException | IllegalBlockSizeException | InvalidKeyException | NoSuchPaddingException e) {
             result = CryptoUtils.decryptMnemonic(encryptedMnemonicBytes, password);
         }
         if (isLegacy) {
@@ -277,7 +309,7 @@ public class WalletStorage {
         return result;
     }
 
-    private byte[] decryptLegacyMnemonic(final byte[] encryptedMnemonicBytes, final String password) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, UnsupportedEncodingException {
+    private byte[] decryptLegacyMnemonic(final byte[] encryptedMnemonicBytes, final String password) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
         SecretKeySpec keySpec = new SecretKeySpec(password.getBytes(), LEGACY_ENCRYPTION_ALGORITHM);
         Cipher cipher = Cipher.getInstance(LEGACY_ENCRYPTION_ALGORITHM);
         cipher.init(Cipher.DECRYPT_MODE, keySpec);
