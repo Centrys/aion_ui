@@ -3,6 +3,7 @@ package org.aion.wallet.connector.dto;
 import org.aion.base.util.TypeConverter;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.Objects;
 
 public class TransactionDTO implements Comparable<TransactionDTO> {
@@ -16,8 +17,12 @@ public class TransactionDTO implements Comparable<TransactionDTO> {
     private final Long blockNumber;
     private final BigInteger nonce;
     private final int txIndex;
+    private final byte[] data;
 
-    public TransactionDTO(final String from, final String to, final String hash, final BigInteger value, final long nrg, final long nrgPrice, final long timeStamp, final long blockNumber, BigInteger nonce, final int txIndex) {
+    public TransactionDTO(
+            final String from, final String to, final String hash, final BigInteger value, final long nrg, final long nrgPrice, final long timeStamp,
+            final long blockNumber, BigInteger nonce, final int txIndex, final byte[] data
+    ) {
         this.from = TypeConverter.toJsonHex(from);
         this.to = TypeConverter.toJsonHex(to);
         this.hash = hash;
@@ -28,6 +33,7 @@ public class TransactionDTO implements Comparable<TransactionDTO> {
         this.blockNumber = blockNumber;
         this.nonce = nonce;
         this.txIndex = txIndex;
+        this.data = data;
     }
 
     public String getFrom() {
@@ -66,6 +72,10 @@ public class TransactionDTO implements Comparable<TransactionDTO> {
         return nonce;
     }
 
+    public byte[] getData() {
+        return data;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
@@ -76,12 +86,13 @@ public class TransactionDTO implements Comparable<TransactionDTO> {
                 Objects.equals(hash, that.hash) &&
                 Objects.equals(value, that.value) &&
                 Objects.equals(blockNumber, that.blockNumber) &&
-                Objects.equals(nonce, that.nonce);
+                Objects.equals(nonce, that.nonce) &&
+                Arrays.equals(data, that.data);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(from, to, hash, value, blockNumber, nonce);
+        return Objects.hash(from, to, hash, value, blockNumber, nonce, data);
     }
 
     @Override

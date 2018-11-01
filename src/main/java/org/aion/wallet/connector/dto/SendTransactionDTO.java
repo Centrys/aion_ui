@@ -1,7 +1,6 @@
 package org.aion.wallet.connector.dto;
 
 import org.aion.base.util.ByteArrayWrapper;
-import org.aion.base.util.ByteUtil;
 import org.aion.wallet.dto.AccountDTO;
 import org.aion.wallet.exception.ValidationException;
 import org.aion.wallet.util.AddressUtils;
@@ -15,19 +14,17 @@ public class SendTransactionDTO {
     private final Long nrg;
     private final BigInteger value;
     private final BigInteger nonce = BigInteger.ZERO;
-    private byte[] data = ByteUtil.EMPTY_BYTE_ARRAY;
+    private final byte[] data;
     private BigInteger nrgPrice;
 
-    public SendTransactionDTO(final AccountDTO from, final String to, final Long nrg, final BigInteger nrgPrice, final BigInteger value) {
+    public SendTransactionDTO(
+            final AccountDTO from, final String to, final Long nrg, final BigInteger nrgPrice, final BigInteger value, final byte[] data
+    ) {
         this.from = from;
         this.to = to;
         this.nrg = nrg;
         this.nrgPrice = nrgPrice;
         this.value = value;
-    }
-
-    public SendTransactionDTO(final AccountDTO from, final String to, final Long nrg, final BigInteger nrgPrice, final BigInteger value, final byte[] data) {
-        this(from, to, nrg, nrgPrice, value);
         this.data = data;
     }
 

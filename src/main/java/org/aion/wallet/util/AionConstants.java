@@ -16,7 +16,7 @@ public final class AionConstants {
 
     public static final int DEFAULT_NRG = Constants.NRG_TRANSACTION;
 
-    public static final int DEFAULT_TOKEN_NRG = 25_000;
+    public static final int DEFAULT_TOKEN_NRG = 65_000;
 
     public static final BigInteger DEFAULT_NRG_PRICE = BigInteger.valueOf(10 * AMP);
 

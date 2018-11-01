@@ -49,6 +49,8 @@ public class ApiBlockchainConnector extends BlockchainConnector {
             .r_tx_Init_VALUE, Message.Retcode.r_tx_Recved_VALUE, Message.Retcode.r_tx_NewPending_VALUE, Message
             .Retcode.r_tx_Pending_VALUE, Message.Retcode.r_tx_Included_VALUE);
 
+    private static final String FAILED_TOKEN_TRANSFER_FORMAT = "Transaction: %s was registered but the Token transfer has failed due to a small energy limit";
+
     private final TokenManager tokenManager;
 
     private final ExecutorService backgroundExecutor;
@@ -194,12 +196,17 @@ public class ApiBlockchainConnector extends BlockchainConnector {
         final int responseStatus = transactionResponseDTO.getStatus();
         if (!ACCEPTED_TRANSACTION_RESPONSE_STATUSES.contains(responseStatus)) {
             getAccountManager().addTimedOutTransaction(dto);
+        } else if (response.getError() != null && response.getError().equals("OUT_OF_NRG")) {
+            final String message = String.format(FAILED_TOKEN_TRANSFER_FORMAT, transactionResponseDTO.getTxHash());
+            ConsoleManager.addLog(message, ConsoleManager.LogType.TRANSACTION, ConsoleManager.LogLevel.ERROR);
+            log.error(message);
+            throw new ValidationException("Token Transfer failed. See logs for details");
         }
         return transactionResponseDTO;
     }
 
     private TransactionResponseDTO mapTransactionResponse(final MsgRsp response) {
-        return new TransactionResponseDTO(response.getStatus(), response.getTxHash(), response.getError());
+        return new TransactionResponseDTO(response.getStatus(), response.getTxHash().toString(), response.getError());
     }
 
     @Override
@@ -542,7 +549,9 @@ public class ApiBlockchainConnector extends BlockchainConnector {
                 transaction.getTimeStamp(),
                 transaction.getBlockNumber(),
                 transaction.getNonce(),
-                transaction.getTransactionIndex());
+                transaction.getTransactionIndex(),
+                transaction.getData().getData()
+        );
     }
 
     private TransactionDTO mapTransaction(final TxDetails transaction, final long timeStamp, final long blockNumber) {
@@ -559,7 +568,9 @@ public class ApiBlockchainConnector extends BlockchainConnector {
                 timeStamp,
                 blockNumber,
                 transaction.getNonce(),
-                transaction.getTxIndex());
+                transaction.getTxIndex(),
+                transaction.getData().getData()
+        );
     }
 
     private ConnectionDetails getConnectionDetails() {

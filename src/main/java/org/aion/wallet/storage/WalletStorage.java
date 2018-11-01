@@ -61,6 +61,8 @@ public class WalletStorage {
 
     private static final String DELIM = ":";
 
+    private static final String ZERO = "0";
+
     static {
         String storageDir = System.getProperty("local.storage.dir");
         if (storageDir == null || storageDir.equalsIgnoreCase("")) {
@@ -77,9 +79,7 @@ public class WalletStorage {
         TOKENS_FILE = STORAGE_DIR + File.separator + "tokens.properties";
 
         WALLET_FILE = STORAGE_DIR + File.separator + "wallet.properties";
-    }
 
-    static {
         try {
             INST = new WalletStorage();
         } catch (IOException e) {
@@ -243,8 +243,13 @@ public class WalletStorage {
     public void setMasterAccountMnemonic(final String mnemonic, final String password) throws ValidationException {
         try {
             if (mnemonic != null) {
-                accountsProperties.setProperty(MASTER_MNEMONIC_PROP, encryptMnemonic(mnemonic, password));
-                saveAccounts();
+                if (!hasMasterAccount()) {
+                    accountsProperties.setProperty(MASTER_MNEMONIC_PROP, encryptMnemonic(mnemonic, password));
+                    accountsProperties.setProperty(MASTER_DERIVATIONS_PROP, ZERO);
+                    saveAccounts();
+                } else {
+                    throw new ValidationException("Cannot set mnemonic because one already exists");
+                }
             }
         } catch (Exception e) {
             throw new ValidationException("Cannot encode master account key");

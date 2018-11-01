@@ -4,7 +4,6 @@ import com.google.common.eventbus.Subscribe;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.*;
@@ -12,6 +11,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import org.aion.api.impl.internal.Message;
 import org.aion.api.log.LogEnum;
+import org.aion.base.util.ByteUtil;
 import org.aion.base.util.TypeConverter;
 import org.aion.mcf.vm.Constants;
 import org.aion.wallet.connector.BlockchainConnector;
@@ -24,7 +24,10 @@ import org.aion.wallet.events.*;
 import org.aion.wallet.exception.ValidationException;
 import org.aion.wallet.log.WalletLoggerFactory;
 import org.aion.wallet.ui.components.partials.TransactionResubmissionDialog;
-import org.aion.wallet.util.*;
+import org.aion.wallet.util.AddressUtils;
+import org.aion.wallet.util.AionConstants;
+import org.aion.wallet.util.BalanceUtils;
+import org.aion.wallet.util.UIUtils;
 import org.slf4j.Logger;
 
 import java.math.BigInteger;
@@ -51,6 +54,8 @@ public class SendController extends AbstractController {
     private static final Tooltip AMOUNT_TOOLTIP = new Tooltip("This is the amount that the address specified above will receive");
 
     private static final String SEPARATOR = "-----";
+
+    private static final String EMPTY = "";
 
     private final BlockchainConnector blockchainConnector = BlockchainConnector.getInstance();
 
@@ -92,28 +97,23 @@ public class SendController extends AbstractController {
 
     @Override
     protected void internalInit(final URL location, final ResourceBundle resources) {
-        TO_ADDRESS_TOOLTIP.setPrefWidth(200);
-        TO_ADDRESS_TOOLTIP.setWrapText(true);
-        NRG_LIMIT_TOOLTIP.setPrefWidth(200);
-        NRG_LIMIT_TOOLTIP.setWrapText(true);
-        NRG_PRICE_TOOLTIP.setPrefWidth(200);
-        NRG_PRICE_TOOLTIP.setWrapText(true);
-        AMOUNT_TOOLTIP.setPrefWidth(200);
-        AMOUNT_TOOLTIP.setWrapText(true);
-
-        toInput.setTooltip(TO_ADDRESS_TOOLTIP);
-        nrgInput.setTooltip(NRG_LIMIT_TOOLTIP);
-        nrgPriceInput.setTooltip(NRG_PRICE_TOOLTIP);
-        valueInput.setTooltip(AMOUNT_TOOLTIP);
         setDefaults();
 
+        initTextField(toInput, TO_ADDRESS_TOOLTIP);
+        initTextField(nrgInput, NRG_LIMIT_TOOLTIP);
+        initTextField(nrgPriceInput, NRG_PRICE_TOOLTIP);
+        initTextField(valueInput, AMOUNT_TOOLTIP);
+    }
+
+    private void initTextField(final TextField toInput, final Tooltip tooltip) {
+        toInput.setTooltip(initTooltip(tooltip));
         toInput.textProperty().addListener(event -> transactionToResubmit = null);
+    }
 
-        nrgInput.textProperty().addListener(event -> transactionToResubmit = null);
-
-        nrgPriceInput.textProperty().addListener(event -> transactionToResubmit = null);
-
-        valueInput.textProperty().addListener(event -> transactionToResubmit = null);
+    private Tooltip initTooltip(final Tooltip tooltip) {
+        tooltip.setPrefWidth(200);
+        tooltip.setWrapText(true);
+        return tooltip;
     }
 
     @Override
@@ -131,6 +131,7 @@ public class SendController extends AbstractController {
                 break;
             case TRANSACTION_FINISHED:
                 setDefaults();
+                currencySelect.getSelectionModel().select(0);
                 refreshAccountBalance();
                 break;
             default:
@@ -144,8 +145,8 @@ public class SendController extends AbstractController {
             switch (keyEvent.getCode()) {
                 case TAB:
                     try {
-                        checkAddress();
-                        displayStatus("", false);
+                        checkDestinationAddress();
+                        displayStatus(EMPTY, false);
                     } catch (ValidationException e) {
                         displayStatus(e.getMessage(), true);
                     }
@@ -161,7 +162,7 @@ public class SendController extends AbstractController {
                 case TAB:
                     try {
                         getNrg();
-                        displayStatus("", false);
+                        displayStatus(EMPTY, false);
                     } catch (ValidationException e) {
                         displayStatus(e.getMessage(), true);
                     }
@@ -177,7 +178,7 @@ public class SendController extends AbstractController {
                 case TAB:
                     try {
                         getNrgPrice();
-                        displayStatus("", false);
+                        displayStatus(EMPTY, false);
                     } catch (ValidationException e) {
                         displayStatus(e.getMessage(), true);
                     }
@@ -196,7 +197,7 @@ public class SendController extends AbstractController {
                 case TAB:
                     try {
                         getValue();
-                        displayStatus("", false);
+                        displayStatus(EMPTY, false);
                     } catch (ValidationException e) {
                         displayStatus(e.getMessage(), true);
                     }
@@ -297,8 +298,8 @@ public class SendController extends AbstractController {
         nrgInput.setText(String.valueOf(Constants.NRG_TRANSACTION));
         nrgPriceInput.setText(AionConstants.DEFAULT_NRG_PRICE.toString());
 
-        toInput.setText("");
-        valueInput.setText("");
+        toInput.setText(EMPTY);
+        valueInput.setText(EMPTY);
 
         setTimedOutTransactionsLabelText();
     }
@@ -335,10 +336,10 @@ public class SendController extends AbstractController {
             if (account.equals(this.account)) {
                 this.account = null;
                 sendButton.setDisable(true);
-                accountAddress.setText("");
+                accountAddress.setText(EMPTY);
                 accountBalance.setVisible(false);
                 setDefaults();
-                txStatusLabel.setText("");
+                txStatusLabel.setText(EMPTY);
             }
             currencySelect.setDisable(true);
         }
@@ -369,7 +370,7 @@ public class SendController extends AbstractController {
         nrgInput.setText(sendTransaction.getNrg().toString());
         nrgPriceInput.setText(String.valueOf(sendTransaction.getNrgPrice()));
         valueInput.setText(BalanceUtils.formatBalance(sendTransaction.getValue()));
-        txStatusLabel.setText("");
+        txStatusLabel.setText(EMPTY);
         timedOutTransactionsLabel.setVisible(false);
         transactionToResubmit = sendTransaction;
     }
@@ -409,32 +410,25 @@ public class SendController extends AbstractController {
     }
 
     private SendTransactionDTO mapFormData() throws ValidationException {
-
-        checkAddress();
-
+        checkDestinationAddress();
+        final String toAddress;
+        final byte[] data;
         final long nrg = getNrg();
-
         final BigInteger nrgPrice = getNrgPrice();
-
         final BigInteger value = getValue();
-
         final Optional<TokenDetails> tokenDetailsOptional = getTokenDetailsOptional();
 
-        return tokenDetailsOptional.map(
-                tokenDetails -> {
-                    final String tokenAddress = tokenDetails.getContractAddress();
-                    final byte[] sendData = blockchainConnector.getTokenSendData(tokenAddress, account.getPublicAddress(), toInput.getText(), value);
-                    final long estimatedNrg = getEstimatedNrg(sendData);
-                    return new SendTransactionDTO(account, tokenAddress, estimatedNrg, nrgPrice, BigInteger.ZERO, sendData);
-                })
-                .orElseGet(() -> new SendTransactionDTO(account, toInput.getText(), nrg, nrgPrice, value));
-    }
-
-    private long getEstimatedNrg(final byte[] sendData) {
-        final long zeroes = zeroBytesInData(sendData);
-        final long nonZeroes = nonZeroBytesInData(sendData);
-        final long energy = Constants.NRG_TRANSACTION + zeroes * Constants.NRG_TX_DATA_ZERO + nonZeroes * Constants.NRG_TX_DATA_NONZERO;
-        return (Math.floorDiv(energy, 1000) + 1) * 1000;
+        if (tokenDetailsOptional.isPresent()) {
+            toAddress = tokenDetailsOptional.get().getContractAddress();
+            data = blockchainConnector.getTokenSendData(toAddress, account.getPublicAddress(), toInput.getText(), value);
+            if (nrg < AionConstants.DEFAULT_TOKEN_NRG) {
+                throw new ValidationException("Too little nrg allocated for token transfer");
+            }
+        } else {
+            toAddress = toInput.getText();
+            data = ByteUtil.EMPTY_BYTE_ARRAY;
+        }
+        return new SendTransactionDTO(account, toAddress, nrg, nrgPrice, BigInteger.ZERO, data);
     }
 
     private Optional<TokenDetails> getTokenDetailsOptional() throws ValidationException {
@@ -462,7 +456,7 @@ public class SendController extends AbstractController {
         return blockchainConnector.getTokenBalance(tokenAddress.getContractAddress(), account.getPublicAddress());
     }
 
-    private void checkAddress() throws ValidationException {
+    private void checkDestinationAddress() throws ValidationException {
         if (!AddressUtils.isValid(toInput.getText())) {
             throw new ValidationException("Address is not a valid AION address!");
         }
@@ -508,18 +502,21 @@ public class SendController extends AbstractController {
     }
 
     public void showInfoTooltip(final MouseEvent mouseEvent) {
-        switch (((Node) mouseEvent.getSource()).getId()) {
+        final Node source = (Node) mouseEvent.getSource();
+        final double anchorX = (source).getScene().getWindow().getX() + 600;
+        final double windowY = (source).getScene().getWindow().getY();
+        switch ((source).getId()) {
             case "toAddressInfoPane":
-                TO_ADDRESS_TOOLTIP.show((Node) mouseEvent.getSource(), ((Node) mouseEvent.getSource()).getScene().getWindow().getX() + 600, ((Node) mouseEvent.getSource()).getScene().getWindow().getY() + 220);
+                TO_ADDRESS_TOOLTIP.show(source, anchorX, windowY + 220);
                 break;
             case "energyInfoPane":
-                NRG_LIMIT_TOOLTIP.show((Node) mouseEvent.getSource(), ((Node) mouseEvent.getSource()).getScene().getWindow().getX() + 600, ((Node) mouseEvent.getSource()).getScene().getWindow().getY() + 265);
+                NRG_LIMIT_TOOLTIP.show(source, anchorX, windowY + 265);
                 break;
             case "energyPriceInfoPane":
-                NRG_PRICE_TOOLTIP.show((Node) mouseEvent.getSource(), ((Node) mouseEvent.getSource()).getScene().getWindow().getX() + 600, ((Node) mouseEvent.getSource()).getScene().getWindow().getY() + 315);
+                NRG_PRICE_TOOLTIP.show(source, anchorX, windowY + 315);
                 break;
             case "amountInfoPane":
-                AMOUNT_TOOLTIP.show((Node) mouseEvent.getSource(), ((Node) mouseEvent.getSource()).getScene().getWindow().getX() + 600, ((Node) mouseEvent.getSource()).getScene().getWindow().getY() + 330);
+                AMOUNT_TOOLTIP.show(source, anchorX, windowY + 330);
                 break;
         }
     }
@@ -541,29 +538,11 @@ public class SendController extends AbstractController {
         }
     }
 
-    private long nonZeroBytesInData(final byte[] data) {
-        int total = (data == null) ? 0 : data.length;
-
-        return total - zeroBytesInData(data);
-    }
-
-    private long zeroBytesInData(final byte[] data) {
-        if (data == null) {
-            return 0;
-        }
-
-        int zeroes = 0;
-        for (byte b : data) {
-            zeroes += (b == 0) ? 1 : 0;
-        }
-        return zeroes;
-    }
-
     @FXML
-    private void coinChanged(final ActionEvent actionEvent) {
+    private void coinChanged() {
         final String selectedItem = currencySelect.getSelectionModel().getSelectedItem();
         if (SEPARATOR.equals(selectedItem)) {
-            nrgInput.setText("");
+            nrgInput.setText(EMPTY);
         } else if (getTokens(account).contains(selectedItem)) {
             nrgInput.setText(String.valueOf(AionConstants.DEFAULT_TOKEN_NRG));
         } else {
