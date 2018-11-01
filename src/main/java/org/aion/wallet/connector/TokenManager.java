@@ -69,7 +69,7 @@ public class TokenManager {
         }
         final String name = getTypeResponse(nameResponse.getObject());
         if (name == null || name.isEmpty()) {
-            throw new ValidationException(noDataErrorString);
+            throw new ValidationException(String.format(noDataErrorString + " " + tokenAddress));
         }
         return name;
     }

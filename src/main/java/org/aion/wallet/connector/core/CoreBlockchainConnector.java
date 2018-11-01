@@ -153,18 +153,19 @@ public class CoreBlockchainConnector extends BlockchainConnector {
         if (transaction == null) {
             return null;
         }
+        final SendData sendData = getSendData(transaction.getFrom().toString(), transaction.getTo().toString(), new BigInteger(transaction.getValue()), transaction.getData());
         return new TransactionDTO(
-                transaction.getFrom().toString(),
-                transaction.getTo().toString(),
+                sendData.getFrom(),
+                sendData.getTo(),
+                sendData.getValue(),
+                sendData.getCoin(),
                 ByteUtil.toHexString(transaction.getHash()),
-                TypeConverter.StringHexToBigInteger(TypeConverter.toJsonHex(transaction.getValue())),
                 transaction.getNrg(),
                 transaction.getNrgPrice(),
                 transaction.getTimeStampBI().longValue(),
-                0L,
+                transaction.getBlockNumber(),
                 transaction.getNonceBI(),
-                (int) transaction.getTxIndexInBlock(),
-                transaction.getData()
+                (int) transaction.getTxIndexInBlock()
         );
     }
 }

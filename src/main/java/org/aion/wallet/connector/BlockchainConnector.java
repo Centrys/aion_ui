@@ -1,5 +1,7 @@
 package org.aion.wallet.connector;
 
+import org.aion.base.util.TypeConverter;
+import org.aion.rlp.Value;
 import org.aion.wallet.account.AccountManager;
 import org.aion.wallet.connector.api.ApiBlockchainConnector;
 import org.aion.wallet.connector.dto.SendTransactionDTO;
@@ -23,6 +25,8 @@ import java.util.concurrent.locks.ReentrantLock;
 public abstract class BlockchainConnector {
 
     private static final String CORE_CONNECTOR_CLASS = "org.aion.wallet.connector.core.CoreBlockchainConnector";
+
+    private static final String SEND = "f0a147ad";
 
     private static BlockchainConnector INST;
 
@@ -225,5 +229,61 @@ public abstract class BlockchainConnector {
 
     public final void addAccountToken(final String address, final String tokenSymbol) {
         walletStorage.addAccountToken(address, tokenSymbol);
+    }
+
+    protected final SendData getSendData(String initialFrom, String initialTo, BigInteger initialValue, byte[] data) {
+        BigInteger value = initialValue;
+        String coin;
+        String to = initialTo;
+        if (BigInteger.ZERO.equals(value)) {
+            try {
+                final String dataString = TypeConverter.toJsonHex(data);
+                final String function = dataString.substring(2, 10);
+                if (SEND.equalsIgnoreCase(function)) {
+                    to = dataString.substring(10, 74);
+                    value = TypeConverter.StringHexToBigInteger(dataString.substring(74, 106));
+                    final TokenDetails tokenDetails = getTokenDetails(initialTo, initialFrom);
+                    coin = tokenDetails.getSymbol();
+                } else {
+                    coin = "";
+                }
+            } catch (ValidationException e) {
+                value = BigInteger.ZERO;
+                coin = "";
+            }
+        } else {
+            coin = getCurrency();
+        }
+        return new ApiBlockchainConnector.SendData(initialFrom, to, coin, value);
+    }
+
+    protected static class SendData {
+        private final String from;
+        private final String to;
+        private final String coin;
+        private final BigInteger value;
+
+        private SendData(String from, String to, String coin, BigInteger value) {
+            this.from = from;
+            this.coin = coin;
+            this.to = to;
+            this.value = value;
+        }
+
+        public String getFrom() {
+            return from;
+        }
+
+        public String getTo() {
+            return to;
+        }
+
+        public String getCoin() {
+            return coin;
+        }
+
+        public BigInteger getValue() {
+            return value;
+        }
     }
 }
