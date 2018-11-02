@@ -389,8 +389,7 @@ public class ApiBlockchainConnector extends BlockchainConnector {
 
     private void processTransactionsOnReconnect() {
         final Set<String> addresses = getAccountManager().getAddresses();
-        final BlockDTO oldestSafeBlock = getOldestSafeBlock(addresses, i -> {
-        });
+        final BlockDTO oldestSafeBlock = getOldestSafeBlock(addresses, i -> {});
         processTransactionsFromBlock(oldestSafeBlock, addresses);
     }
 
@@ -441,14 +440,10 @@ public class ApiBlockchainConnector extends BlockchainConnector {
                     List<BlockDetails> blk = getBlockDetailsByNumbers(blockBatch);
                     blk.forEach(getBlockDetailsConsumer(addresses));
                 }
-                final long newSafeBlockNumber = latest - BLOCK_BATCH_SIZE;
-                final Block newSafe;
-                if (newSafeBlockNumber > 0) {
-                    newSafe = getBlock(newSafeBlockNumber);
-                    for (String address : addresses) {
-                        getAccountManager().updateLastSafeBlock(address, new BlockDTO(newSafe.getNumber(), newSafe
-                                .getHash().toBytes()));
-                    }
+                long newSafeBlockNumber = Math.max(1, latest - BLOCK_BATCH_SIZE);
+                final Block newSafe = getBlock(newSafeBlockNumber);
+                for (String address : addresses) {
+                    getAccountManager().updateLastSafeBlock(address, new BlockDTO(newSafe.getNumber(), newSafe.getHash().toBytes()));
                 }
                 log.debug("finished processing for addresses: {}", addresses);
             }

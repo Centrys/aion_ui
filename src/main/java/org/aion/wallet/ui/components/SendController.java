@@ -415,8 +415,8 @@ public class SendController extends AbstractController {
         final byte[] data;
         final long nrg = getNrg();
         final BigInteger nrgPrice = getNrgPrice();
-        final BigInteger value = getValue();
         final Optional<TokenDetails> tokenDetailsOptional = getTokenDetailsOptional();
+        BigInteger value = getValue();
 
         if (tokenDetailsOptional.isPresent()) {
             toAddress = tokenDetailsOptional.get().getContractAddress();
@@ -424,11 +424,12 @@ public class SendController extends AbstractController {
             if (nrg < AionConstants.DEFAULT_TOKEN_NRG) {
                 throw new ValidationException("Too little nrg allocated for token transfer");
             }
+            value = BigInteger.ZERO;
         } else {
             toAddress = toInput.getText();
             data = ByteUtil.EMPTY_BYTE_ARRAY;
         }
-        return new SendTransactionDTO(account, toAddress, nrg, nrgPrice, BigInteger.ZERO, data);
+        return new SendTransactionDTO(account, toAddress, nrg, nrgPrice, value, data);
     }
 
     private Optional<TokenDetails> getTokenDetailsOptional() throws ValidationException {

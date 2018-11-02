@@ -1,7 +1,6 @@
 package org.aion.wallet.connector;
 
 import org.aion.base.util.TypeConverter;
-import org.aion.rlp.Value;
 import org.aion.wallet.account.AccountManager;
 import org.aion.wallet.connector.api.ApiBlockchainConnector;
 import org.aion.wallet.connector.dto.SendTransactionDTO;
@@ -247,14 +246,18 @@ public abstract class BlockchainConnector {
                 } else {
                     coin = "";
                 }
-            } catch (ValidationException e) {
+            } catch (Exception e) {
                 value = BigInteger.ZERO;
-                coin = "";
+                if (data.length == 0) {
+                    coin = getCurrency();
+                } else {
+                    coin = "";
+                }
             }
         } else {
             coin = getCurrency();
         }
-        return new ApiBlockchainConnector.SendData(initialFrom, to, coin, value);
+        return new SendData(initialFrom, to, coin, value);
     }
 
     protected static class SendData {
