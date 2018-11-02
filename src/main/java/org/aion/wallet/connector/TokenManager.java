@@ -54,22 +54,22 @@ public class TokenManager {
     }
 
     public final String getName(final String tokenAddress, final String accountAddress) throws ValidationException {
-        return callFunctionWithoutParams(tokenAddress, accountAddress, NAME, "No Token Name found");
+        return callFunctionWithoutParams(tokenAddress, accountAddress, NAME);
     }
 
     public final String getSymbol(final String tokenAddress, final String accountAddress) throws ValidationException {
-        return callFunctionWithoutParams(tokenAddress, accountAddress, SYMBOL, "No Token Symbol found");
+        return callFunctionWithoutParams(tokenAddress, accountAddress, SYMBOL);
     }
 
-    private String callFunctionWithoutParams(String tokenAddress, String accountAddress, String functionName, String noDataErrorString) throws ValidationException {
+    private String callFunctionWithoutParams(String tokenAddress, String accountAddress, String functionName) throws ValidationException {
         final IContract contract = getTokenAtAddress(tokenAddress, accountAddress);
         final ApiMsg nameResponse = contract.newFunction(functionName).build().execute();
         if (nameResponse.isError()) {
             throw new ValidationException(nameResponse.getErrString());
         }
-        final String name = getTypeResponse(nameResponse.getObject());
+        final String name = getResponseContent(nameResponse.getObject());
         if (name == null || name.isEmpty()) {
-            throw new ValidationException(String.format(noDataErrorString + " " + tokenAddress));
+            throw new ValidationException("No token found!");
         }
         return name;
     }
@@ -104,11 +104,11 @@ public class TokenManager {
     }
 
     private BigInteger getBigIntegerResponse(final ContractResponse response) throws ValidationException {
-        final byte[] typeResponse = getTypeResponse(response);
+        final byte[] typeResponse = getResponseContent(response);
         return TypeConverter.StringHexToBigInteger(TypeConverter.toJsonHex(typeResponse));
     }
 
-    private <T> T getTypeResponse(final ContractResponse response) throws ValidationException {
+    private <T> T getResponseContent(final ContractResponse response) throws ValidationException {
         try {
             return (T) response.getData().get(0);
         } catch (Exception e) {

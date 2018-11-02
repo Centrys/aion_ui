@@ -106,7 +106,6 @@ public class TokenBalanceController implements Initializable {
         final HBox row = new HBox();
         row.setSpacing(10);
         row.setAlignment(Pos.CENTER_LEFT);
-        row.setPrefWidth(290);
         row.getStyleClass().add(ROW);
 
         final Label tokenSymbol = getSymbolLabel(tokenDetails);

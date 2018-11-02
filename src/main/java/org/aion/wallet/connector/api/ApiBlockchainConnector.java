@@ -163,7 +163,7 @@ public class ApiBlockchainConnector extends BlockchainConnector {
     @Override
     public TokenDetails getTokenDetails(final String tokenAddress, final String accountAddress) throws ValidationException {
         if (!AddressUtils.isValid(tokenAddress)) {
-            throw new ValidationException("The contract address is not valid!");
+            throw new ValidationException("Invalid token address");
         }
         TokenDetails tokenDetails = tokenAddressToDetails.get(tokenAddress);
         if (tokenDetails == null) {
