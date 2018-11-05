@@ -23,19 +23,7 @@
     "name": "",
     "type": "constructor"
   },
-  {
-    "outputs": [],
-    "constant": false,
-    "payable": false,
-    "inputs": [
-      {
-        "name": "assertion",
-        "type": "bool"
-      }
-    ],
-    "name": "assert",
-    "type": "function"
-  },
+
   {
     "outputs": [
       {

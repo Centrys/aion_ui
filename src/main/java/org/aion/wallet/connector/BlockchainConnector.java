@@ -165,11 +165,6 @@ public abstract class BlockchainConnector {
 
     public abstract LightAppSettings getSettings();
 
-
-    public TransactionResponseDTO sendAionToken(final SendTransactionDTO transactionWithToken) throws ValidationException {
-        return sendTransaction(transactionWithToken);
-    }
-
     public final TransactionResponseDTO sendTransaction(final SendTransactionDTO transactionWrapper) throws ValidationException {
         if (transactionWrapper == null || !transactionWrapper.validate()) {
             throw new ValidationException("Invalid transaction request data");

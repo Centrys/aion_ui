@@ -31,15 +31,14 @@ public class TokenManager {
     private static final String BALANCE = "balanceOf";
     private static final String NAME = "name";
     private static final String SYMBOL = "symbol";
-    private static final String ABI_JSON = "token_abi.json";
+    private static final String ABI_JSON = "ats_abi.json";
 
     private final Map<Address, IContract> addressToContract = new HashMap<>();
+    private final String abiDescription = getAbiDescription();
     private final IContractController contractController;
-    private final String abiDescription;
 
     public TokenManager(final IAionAPI api) {
         this.contractController = api.getContractController();
-        this.abiDescription = getAbiDescription();
     }
 
     private String getAbiDescription() {
@@ -82,7 +81,8 @@ public class TokenManager {
         for (final ISolidityArg parameter : parameters) {
             function.setParam(parameter);
         }
-        final ApiMsg nameResponse = function.build().execute();
+        final ApiMsg nameResponse;
+        nameResponse = function.build().execute();
         if (nameResponse.isError()) {
             throw new ValidationException(nameResponse.getErrString());
         }

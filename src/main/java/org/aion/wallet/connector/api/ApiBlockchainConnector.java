@@ -64,7 +64,6 @@ public class ApiBlockchainConnector extends BlockchainConnector {
 
     private ConnectionDetails connectionDetails;
 
-
     private long startingBlock;
 
     public ApiBlockchainConnector() {
@@ -153,7 +152,12 @@ public class ApiBlockchainConnector extends BlockchainConnector {
 
     @Override
     public BigInteger getTokenBalance(final String tokenAddress, final String accountAddress) throws ValidationException {
-        return new BigInteger(String.valueOf(tokenManager.getBalance(tokenAddress, accountAddress)));
+        lock();
+        try {
+            return new BigInteger(String.valueOf(tokenManager.getBalance(tokenAddress, accountAddress)));
+        } finally {
+            unLock();
+        }
     }
 
     public byte[] getTokenSendData(final String tokenAddress, final String accountAddress, final String destinationAddress, final BigInteger value) {
@@ -174,8 +178,15 @@ public class ApiBlockchainConnector extends BlockchainConnector {
     }
 
     private TokenDetails createTokenDetails(String tokenAddress, String accountAddress) throws ValidationException {
-        final String name = tokenManager.getName(tokenAddress, accountAddress);
-        final String symbol = tokenManager.getSymbol(tokenAddress, accountAddress);
+        final String name;
+        final String symbol;
+        lock();
+        try {
+            name = tokenManager.getName(tokenAddress, accountAddress);
+            symbol = tokenManager.getSymbol(tokenAddress, accountAddress);
+        } finally {
+            unLock();
+        }
         return new TokenDetails(tokenAddress, name, symbol);
     }
 
