@@ -58,7 +58,7 @@ if [ ${JAVA_VER} != 11 ]; then
 fi
 
 if [ ! -d "${JDK_RT}" ]; then
-  mkdir ${JDK_RT}N
+  mkdir ${JDK_RT}
   OUTPUT=${JDK_RT}/java
   ${JAVA_HOME}/bin/jlink --add-modules java.base,java.xml,java.logging,java.management,jdk.unsupported,java.desktop,java.naming,java.sql,jdk.sctp,java.scripting \
   --output ${OUTPUT} --compress 2 --strip-debug

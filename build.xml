@@ -213,12 +213,14 @@
                 <property name="native.source" value="${res.main}/native/mac"/>
                 <property name="native.dest" value="${project.name}/native/mac"/>
                 <property name="launcher" value="AionWalletLauncher"/>
+                <property name="jfx.suffix" value="mac"/>
             </then>
             <elseif>
                 <os family="windows"/>
                 <then>
                     <property name="native.source" value="${res.main}/native/win"/>
                     <property name="native.dest" value="${project.name}/native/win"/>
+                    <property name="jfx.suffix" value="win"/>
                     <mkdir dir="${dir.rt}"/>
                 </then>
             </elseif>
@@ -232,6 +234,7 @@
                     <property name="native.source" value="${res.main}/native/linux"/>
                     <property name="native.dest" value="${project.name}/native/linux"/>
                     <property name="launcher" value="aion_ui.sh"/>
+                    <property name="jfx.suffix" value="linux"/>
                 </then>
             </elseif>
         </if>
@@ -241,16 +244,24 @@
             </zipfileset>
         </zip>
         <delete dir="${dir.rt}"/>
+        <echo message="${jfx.suffix}"/>
         <zip destfile="${dir.pack}/aion_ui${suffix}.zip">
             <zipfileset dir="${dir.lib}" filemode="755" prefix="${project.name}/lib">
                 <include name="*.jar"/>
                 <exclude name="ant-contrib-0.6.jar"/>
+                <exclude name="javafx-*.jar"/>
+            </zipfileset>
+            <zipfileset dir="${dir.lib}" filemode="755" prefix="${project.name}/lib">
+                <include name="javafx-*-${jfx.suffix}.jar"/>
             </zipfileset>
             <zipfileset dir="${dir.mod}" filemode="755" prefix="${project.name}/mod">
                 <include name="*.jar"/>
             </zipfileset>
             <zipfileset dir="${dir.pack}" filemode="755" prefix="${project.name}/mod">
                 <include name="*.jar"/>
+            </zipfileset>
+            <zipfileset dir="${dir.pack}" filemode="755" prefix="${project.name}">
+                <include name="java.zip"/>
             </zipfileset>
             <zipfileset dir="${dir.cfg}" filemode="755" prefix="${project.name}/config">
                 <include name="*.xml"/>
@@ -266,6 +277,7 @@
             </zipfileset>
         </zip>
         <delete file="${dir.pack}/aion_ui${suffix}.jar"/>
+        <delete file="${dir.pack}/java.zip"/>
         <if>
             <os family="windows"/>
             <then>
@@ -333,7 +345,7 @@
                         <arg value="${mac.dir}/MacOS/native/mac/ledger/hid.tar.gz"/>
                     </exec>
                     <move todir='${mac.dir}/MacOS/'>
-                        <fileset dir="${dir.pack}">
+                        <fileset dir="${dir.pack}/aion_ui">
                             <include name="java.zip"/>
                         </fileset>
                     </move>
