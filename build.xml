@@ -206,6 +206,10 @@
         <if>
             <os family="mac"/>
             <then>
+                <exec executable="/bin/bash" failonerror="true">
+                    <arg value="-l"/>
+                    <arg value="${dir.script}/prepack.sh"/>
+                </exec>
                 <property name="native.source" value="${res.main}/native/mac"/>
                 <property name="native.dest" value="${project.name}/native/mac"/>
                 <property name="launcher" value="AionWalletLauncher"/>
@@ -215,13 +219,15 @@
                 <then>
                     <property name="native.source" value="${res.main}/native/win"/>
                     <property name="native.dest" value="${project.name}/native/win"/>
+                    <mkdir dir="${dir.rt}"/>
                 </then>
             </elseif>
             <elseif>
                 <os family="unix"/>
                 <then>
-                    <exec executable="/bin/bash"  failonerror="true">
-                        <arg value="${dir.script}/prepack.sh" />
+                    <exec executable="/bin/bash" failonerror="true">
+                        <arg value="-l"/>
+                        <arg value="${dir.script}/prepack.sh"/>
                     </exec>
                     <property name="native.source" value="${res.main}/native/linux"/>
                     <property name="native.dest" value="${project.name}/native/linux"/>
@@ -229,6 +235,12 @@
                 </then>
             </elseif>
         </if>
+        <zip destfile="${dir.pack}/java.zip">
+            <zipfileset dir="${dir.rt}" filemode="755">
+                <include name="**/*"/>
+            </zipfileset>
+        </zip>
+        <delete dir="${dir.rt}"/>
         <zip destfile="${dir.pack}/aion_ui${suffix}.zip">
             <zipfileset dir="${dir.lib}" filemode="755" prefix="${project.name}/lib">
                 <include name="*.jar"/>
@@ -239,9 +251,6 @@
             </zipfileset>
             <zipfileset dir="${dir.pack}" filemode="755" prefix="${project.name}/mod">
                 <include name="*.jar"/>
-            </zipfileset>
-            <zipfileset dir="${dir.rt}" filemode="755" prefix="${project.name}/rt">
-                <include name="**/*"/>
             </zipfileset>
             <zipfileset dir="${dir.cfg}" filemode="755" prefix="${project.name}/config">
                 <include name="*.xml"/>
@@ -323,16 +332,11 @@
                         <arg value="755"/>
                         <arg value="${mac.dir}/MacOS/native/mac/ledger/hid.tar.gz"/>
                     </exec>
-                    <exec executable="curl">
-                        <arg value='-o'/>
-                        <arg value='${mac.dir}/MacOS/jre-10.0.2.tar.gz'/>
-                        <arg value='-L'/>
-                        <arg value='-O'/>
-                        <arg value='-H'/>
-                        <arg value='Cookie: oraclelicense=accept-securebackup-cookie'/>
-                        <arg value='-k'/>
-                        <arg value='https://download.oracle.com/otn-pub/java/jdk/10.0.2+13/19aef61b38124481863b1413dce1855f/jre-10.0.2_osx-x64_bin.tar.gz'/>
-                    </exec>
+                    <move todir='${mac.dir}/MacOS/'>
+                        <fileset dir="${dir.pack}">
+                            <include name="java.zip"/>
+                        </fileset>
+                    </move>
 
                     <!--icons-->
                     <mkdir dir="${mac.dir}/Resources"/>

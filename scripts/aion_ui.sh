@@ -13,12 +13,13 @@ echo "Located script directory: ${SCRIPT_PATH}"
 cd ${SCRIPT_PATH}
 
 # setup other directories
+JAVA_VERSION=11.0.1
 STORAGE_DIR=${HOME}/.aion
 LOG_DIR=${STORAGE_DIR}/log
-JAVA_INSTALL=${STORAGE_DIR}/jre-10.0.2
+JAVA_INSTALL=${STORAGE_DIR}/jre-${JAVA_VERSION}
 JAVA_CMD=${JAVA_INSTALL}/bin/java
 
-if [ ! -f ${JAVA_CMD} ] || [ $(${JAVA_CMD} -version 2>&1 | grep "10.0.2" | wc -l) -lt 1 ]; then
+if [ ! -f ${JAVA_CMD} ] || [ $(${JAVA_CMD} -version 2>&1 | grep "${JAVA_VERSION}" | wc -l) -lt 1 ]; then
   mkdir -p ${JAVA_INSTALL}
   cp -r rt/linux/* ${JAVA_INSTALL}
 fi
