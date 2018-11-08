@@ -195,7 +195,7 @@ public class LedgerWallet implements HardwareWallet {
         if (!result.isEmpty() && result.length() == 2 * HEX_KEY_SIZE) {
             return result;
         } else {
-            throw new LedgerException("Error wile communicating with the ledger..." + result);
+            throw new LedgerException("Error wile communicating with the ledger..." + output);
         }
     }
 
