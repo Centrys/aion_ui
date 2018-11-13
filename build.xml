@@ -88,7 +88,7 @@
         <javac
                 debuglevel="source,lines,vars"
                 includeantruntime="false"
-                release="10"
+                release="11"
                 srcdir="${src.test}"
                 destdir="${out.test}"
                 includes="**/*Test.java"
@@ -130,7 +130,7 @@
         <javac
                 debuglevel="source,lines,vars"
                 includeantruntime="false"
-                release="10"
+                release="11"
                 srcdir="./"
                 destdir="${out.main}"
                 excludes="src/main/java/org/aion/connector/api/**/*.java"
@@ -165,7 +165,7 @@
                 debug="true"
                 debuglevel="source,lines,vars"
                 includeantruntime="false"
-                release="10"
+                release="11"
                 srcdir="./"
                 destdir="${out.main}"
                 excludes="src/main/java/org/aion/wallet/connector/core/**/*.java"
@@ -218,6 +218,9 @@
             <elseif>
                 <os family="windows"/>
                 <then>
+                    <exec executable="C:\cygwin64\bin\bash.exe" failonerror="true">
+                        <arg value="${dir.script}/prepack.sh"/>
+                    </exec>
                     <property name="native.source" value="${res.main}/native/win"/>
                     <property name="native.dest" value="${project.name}/native/win"/>
                     <property name="jfx.suffix" value="win"/>
