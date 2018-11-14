@@ -107,7 +107,7 @@ public class TokenManager {
                 .setParam(IDynamicBytes.copyFrom(ByteUtil.EMPTY_BYTE_ARRAY))
                 .setFrom(Address.wrap(accountAddress))
                 .setTxNrgLimit(AionConstants.DEFAULT_TOKEN_NRG)
-                .setTxNrgPrice(AionConstants.DEFAULT_NRG_PRICE.longValue())
+                .setTxNrgPrice(AionConstants.DEFAULT_NRG_PRICE.multiply(AionConstants.AMP).longValue())
                 .build().getEncodedData()
                 .getData();
     }

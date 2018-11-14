@@ -20,7 +20,7 @@ public final class AionConstants {
 
     public static final int DEFAULT_TOKEN_NRG = 65_000;
 
-    public static final BigInteger DEFAULT_NRG_PRICE = BigInteger.TEN.multiply(AMP);
+    public static final BigInteger DEFAULT_NRG_PRICE = BigInteger.TEN;
 
     public static final int BLOCK_MINING_TIME_SECONDS = 10;
 
