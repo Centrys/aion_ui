@@ -39,6 +39,8 @@ set CLASSPATH="%cd%\mod\*;%cd%\lib\*"
 set STORAGE_DIR="%USERPROFILE%\.aion"
 set LOG_DIR="%STORAGE_DIR%\log"
 
+set mytime=%date:~0,2%-%date:~3,2%-%date:~6,4%_%time:~0,2%:%time:~3,2%:%time:~6,2%
+
 mkdir "%LOG_DIR%"
 
-%USERPROFILE%\.aion\java\bin\java.exe -Dfile.encoding=UTF-8 -Dlocal.storage.dir=%STORAGE_DIR% -classpath %CLASSPATH% -Xms300m -Xmx500m org.aion.wallet.WalletApplication > "%LOG_DIR%\log" 2>&1
+%USERPROFILE%\.aion\java\bin\java.exe -Dfile.encoding=UTF-8 -Dlocal.storage.dir=%STORAGE_DIR% -classpath %CLASSPATH% -Xms300m -Xmx500m org.aion.wallet.WalletApplication > "%LOG_DIR%\log_%mydate% 2>&1
