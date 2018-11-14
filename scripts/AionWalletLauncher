@@ -55,6 +55,7 @@ else
   # run the program
   LIB_DIR=$(cd ../Java && pwd)/*
   mkdir -p ${LOG_DIR}
-  ${JAVA_CMD} -cp "${LIB_DIR}" -Dlocal.storage.dir=${STORAGE_DIR} -Xms300m -Xmx500m org.aion.wallet.WalletApplication &> ${LOG_DIR}/log
+  CURRENT_DATE=`date '+%Y-%m-%d_%H:%M:%S'`
+  ${JAVA_CMD} -cp "${LIB_DIR}" -Dlocal.storage.dir=${STORAGE_DIR} -Xms300m -Xmx500m org.aion.wallet.WalletApplication &> ${LOG_DIR}/log_${CURRENT_DATE}
 fi
 
