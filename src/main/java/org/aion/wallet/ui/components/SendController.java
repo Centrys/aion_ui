@@ -520,7 +520,7 @@ public class SendController extends AbstractController {
         final BigInteger nrgPrice;
         try {
             nrgPrice = TypeConverter.StringNumberAsBigInt(nrgPriceInput.getText());
-            if (nrgPrice.compareTo(AionConstants.DEFAULT_NRG_PRICE.multiply(getNrgPriceUnitValue())) < 0) {
+            if (nrgPrice.compareTo(AionConstants.DEFAULT_NRG_PRICE) < 0) {
                 throw new ValidationException(String.format("Nrg price must be greater than %s!", AionConstants.DEFAULT_NRG_PRICE.multiply(getNrgPriceUnitValue())));
             }
         } catch (NumberFormatException e) {
@@ -626,7 +626,7 @@ public class SendController extends AbstractController {
             }
             else {
                 try {
-                    BigInteger amountWithDeductedEnergy = BalanceUtils.extractBalance(account.getFormattedBalance()).subtract(BigInteger.valueOf(getNrg()).multiply(getNrgPrice()));
+                    BigInteger amountWithDeductedEnergy = BalanceUtils.extractBalance(account.getFormattedBalance()).subtract(BigInteger.valueOf(getNrg()).multiply(getNrgPrice().multiply(getNrgPriceUnitValue())));
                     if (amountWithDeductedEnergy.compareTo(BigInteger.ZERO) > 0) {
                         valueInput.setText(BalanceUtils.formatBalance(amountWithDeductedEnergy));
                     } else {
