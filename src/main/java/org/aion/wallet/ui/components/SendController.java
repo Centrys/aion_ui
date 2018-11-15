@@ -299,9 +299,9 @@ public class SendController extends AbstractController {
 
     private void setDefaults() {
         nrgInput.setText(String.valueOf(Constants.NRG_TRANSACTION));
-        nrgPriceInput.setText(AionConstants.DEFAULT_NRG_PRICE.toString());
         nrgPriceUnitSelect.setItems(getNrgPriceUnits());
         nrgPriceUnitSelect.getSelectionModel().select(0);
+        nrgPriceInput.setText(AionConstants.DEFAULT_NRG_PRICE.divide(getNrgPriceUnitValue()).toString());
 
         toInput.setText(EMPTY);
         valueInput.setText(EMPTY);
@@ -430,7 +430,7 @@ public class SendController extends AbstractController {
         final String toAddress;
         final byte[] data;
         final long nrg = getNrg();
-        final BigInteger nrgPrice = getNrgPrice().multiply(getNrgPriceUnitValue());
+        final BigInteger nrgPrice = getNrgPrice();
         final Optional<TokenDetails> tokenDetailsOptional = getTokenDetailsOptional();
         BigInteger value = getValue();
 
@@ -452,12 +452,10 @@ public class SendController extends AbstractController {
         switch (nrgPriceUnitSelect.getSelectionModel().getSelectedItem()) {
             case (AMP_DESCRIPTION) :
                 return AionConstants.AMP;
-
             case (NAMP_DESCRIPTION) :
                 return AionConstants.NAMP;
-
             default:
-                return AionConstants.NAMP;
+                return AionConstants.AION;
         }
     }
 
@@ -519,9 +517,9 @@ public class SendController extends AbstractController {
     private BigInteger getNrgPrice() throws ValidationException {
         final BigInteger nrgPrice;
         try {
-            nrgPrice = TypeConverter.StringNumberAsBigInt(nrgPriceInput.getText());
+            nrgPrice = TypeConverter.StringNumberAsBigInt(nrgPriceInput.getText()).multiply(getNrgPriceUnitValue());
             if (nrgPrice.compareTo(AionConstants.DEFAULT_NRG_PRICE) < 0) {
-                throw new ValidationException(String.format("Nrg price must be greater than %s!", AionConstants.DEFAULT_NRG_PRICE.multiply(getNrgPriceUnitValue())));
+                throw new ValidationException(String.format("Nrg price must be greater than %s nAmp!", AionConstants.DEFAULT_NRG_PRICE));
             }
         } catch (NumberFormatException e) {
             throw new ValidationException("Nrg price must be a valid number!");
@@ -620,20 +618,22 @@ public class SendController extends AbstractController {
                     String selectedTokenBalance = BalanceUtils.formatBalanceWithNumberOfDecimals(getTokenBalance(selectedTokenDetails), 6);
                     valueInput.setText(selectedTokenBalance);
                 } catch (ValidationException e) {
-                    log.info(e.getMessage());
+                    log.error(e.getMessage());
+                    displayStatus(e.getMessage(), true);
                     valueInput.setText("0");
                 }
             }
             else {
                 try {
-                    BigInteger amountWithDeductedEnergy = BalanceUtils.extractBalance(account.getFormattedBalance()).subtract(BigInteger.valueOf(getNrg()).multiply(getNrgPrice().multiply(getNrgPriceUnitValue())));
+                    BigInteger amountWithDeductedEnergy = BalanceUtils.extractBalance(account.getFormattedBalance()).subtract(BigInteger.valueOf(getNrg()).multiply(getNrgPrice()));
                     if (amountWithDeductedEnergy.compareTo(BigInteger.ZERO) > 0) {
                         valueInput.setText(BalanceUtils.formatBalance(amountWithDeductedEnergy));
                     } else {
                         valueInput.setText("0");
                     }
                 } catch (ValidationException e) {
-                    log.info(e.getMessage());
+                    log.error(e.getMessage());
+                    displayStatus(e.getMessage(), true);
                     valueInput.setText("0");
                 }
             }
