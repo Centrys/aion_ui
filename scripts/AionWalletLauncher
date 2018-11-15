@@ -27,34 +27,34 @@ cd ${SCRIPT_PATH}
 if [ ! -f ${JAVA_CMD} ] || [ $(${JAVA_CMD} -version 2>&1 | grep "${JAVA_VERSION}" | wc -l) -lt 1 ]; then
   echo "Could not find Java Install directory. Creating it now ..."
   mkdir -p ${JAVA_INSTALL}
-  echo "Unzipping packaged JRE ..."
-  unzip java.zip -d ${STORAGE_DIR}
+  echo "Unzipping packaged JRE ..." &>> ${LOG_FILE}
+  unzip java.zip -d ${STORAGE_DIR} &>> ${LOG_FILE}
 fi
 
 LEDGER=${SCRIPT_PATH}/native/mac/ledger
 HID=${LEDGER}/hid
 PATH=$PATH:${HID}/node-v8.11.4-darwin-x64/bin
 if [ ! -d ${HID} ]; then
-  echo "HID driver not installed. Installing it now ..."
+  echo "HID driver not installed. Installing it now ..." &>> ${LOG_FILE}
   
   pushd ${LEDGER}
-  echo "Entered the ledger directory $(pwd)"
+  echo "Entered the ledger directory $(pwd)" &>> ${LOG_FILE}
 
-  echo "Extracting the HID driver ..."
-  tar -xzf hid.tar.gz
+  echo "Extracting the HID driver ..." &>> ${LOG_FILE}
+  tar -xzf hid.tar.gz &>> ${LOG_FILE}
   
   pushd ${HID}
-  echo "Entered the hid dirver directory $(pwd)"
+  echo "Entered the hid dirver directory $(pwd)" &>> ${LOG_FILE}
 
   echo "Installing npm dependencies" &>> ${LOG_FILE}
-  npm install
-  npm i -g npm 
-  npm rebuild usb_bindings --update-binary
+  npm install &>> ${LOG_FILE}
+  npm i -g npm &>> ${LOG_FILE}
+  npm rebuild usb_bindings --update-binary &>> ${LOG_FILE}
   echo "In the driver directory $(pwd)"
   pwd
   popd
   popd
-  echo "Back in the binary directory $(pwd)"
+  echo "Back in the binary directory $(pwd)" &>> ${LOG_FILE}
 
   open -a AionWallet
 else
