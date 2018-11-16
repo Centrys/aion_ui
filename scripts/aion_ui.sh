@@ -25,7 +25,7 @@ echo "Located script directory: ${SCRIPT_PATH}"
 cd ${SCRIPT_PATH}
 
 if [[ ! -f ${JAVA_CMD} ]] || [[ $(${JAVA_CMD} -version 2>&1 | grep "${JAVA_VERSION}" | wc -l) -lt 1 ]]; then
-  unzip java.zip -d ${STORAGE_DIR} &>> ${LOG_FILE}
+  unzip java.zip -d ${STORAGE_DIR}
 fi
 
 MOD_DIR=${SCRIPT_PATH}/mod/*
