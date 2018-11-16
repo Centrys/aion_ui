@@ -112,4 +112,8 @@ public class EventPublisher {
     public static void fireLedgerAccountSelected(final InputEvent eventSource) {
         EventBusFactory.getBus(UiMessageEvent.ID).post(new UiMessageEvent(UiMessageEvent.Type.LEDGER_ACCOUNT_SELECTED, eventSource));
     }
+
+    public static void fireDownloadFinished(final String fileName) {
+        EventBusFactory.getBus(UiMessageEvent.ID).post(new UiMessageEvent(UiMessageEvent.Type.DOWNLOAD_FINISHED, fileName));
+    }
 }

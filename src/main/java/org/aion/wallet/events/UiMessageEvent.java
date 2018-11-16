@@ -35,6 +35,7 @@ public class UiMessageEvent extends AbstractEvent<UiMessageEvent.Type> {
         LEDGER_CONNECTED,
         LEDGER_ACCOUNT_SELECTED,
         TOKEN_BALANCES_SHOW,
-        TOKEN_ADDED
+        TOKEN_ADDED,
+        DOWNLOAD_FINISHED
     }
 }

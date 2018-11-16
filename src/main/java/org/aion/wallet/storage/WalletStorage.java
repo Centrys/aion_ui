@@ -5,6 +5,7 @@ import org.aion.wallet.dto.ConnectionDetails;
 import org.aion.wallet.dto.ConnectionProvider;
 import org.aion.wallet.dto.LightAppSettings;
 import org.aion.wallet.dto.TokenDetails;
+import org.aion.wallet.events.EventPublisher;
 import org.aion.wallet.exception.ValidationException;
 import org.aion.wallet.log.WalletLoggerFactory;
 import org.aion.wallet.util.CryptoUtils;
@@ -16,10 +17,12 @@ import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
+import java.nio.channels.ReadableByteChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -28,6 +31,8 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 public class WalletStorage {
@@ -39,6 +44,7 @@ public class WalletStorage {
     private static final String BLANK = "";
 
     private static final String ACCOUNT_NAME_PROP = ".name";
+
     private static final String ACCOUNT_TOKENS_PROP = ".tokens";
 
     private static final String MASTER_DERIVATIONS_PROP = "master.derivations";
@@ -63,22 +69,26 @@ public class WalletStorage {
 
     private static final String ZERO = "0";
 
+    private static final String UPDATES_FOLDER;
+
     static {
         String storageDir = System.getProperty("local.storage.dir");
         if (storageDir == null || storageDir.equalsIgnoreCase("")) {
             storageDir = System.getProperty("user.home") + File.separator + ".aion";
         }
-        STORAGE_DIR = storageDir;
+        STORAGE_DIR = storageDir + File.separator;
 
-        KEYSTORE_PATH = Paths.get(STORAGE_DIR + File.separator + "keystore");
+        KEYSTORE_PATH = Paths.get(STORAGE_DIR + "keystore");
 
-        ACCOUNTS_FILE = STORAGE_DIR + File.separator + "accounts.properties";
+        ACCOUNTS_FILE = STORAGE_DIR + "accounts.properties";
 
-        CONNECTIONS_FILE = STORAGE_DIR + File.separator + "connections.properties";
+        CONNECTIONS_FILE = STORAGE_DIR + "connections.properties";
 
-        TOKENS_FILE = STORAGE_DIR + File.separator + "tokens.properties";
+        TOKENS_FILE = STORAGE_DIR + "tokens.properties";
 
-        WALLET_FILE = STORAGE_DIR + File.separator + "wallet.properties";
+        WALLET_FILE = STORAGE_DIR + "wallet.properties";
+
+        UPDATES_FOLDER = STORAGE_DIR + "updates" + File.separator;
 
         try {
             INST = new WalletStorage();
@@ -103,6 +113,12 @@ public class WalletStorage {
         connectionProperties = getPropertiesFomFIle(CONNECTIONS_FILE);
         lightAppProperties = getPropertiesFomFIle(WALLET_FILE);
         tokenProperties = getPropertiesFomFIle(TOKENS_FILE);
+
+        final URL url = new URL("https://github.com/aionnetwork/Desktop-Wallet/releases/download/1.1.0/aion_ui.zip");
+
+        final ExecutorService executorService = Executors.newSingleThreadExecutor();
+        executorService.submit(() -> downloadUpdate(url));
+
     }
 
     public static WalletStorage getInstance() {
@@ -320,4 +336,37 @@ public class WalletStorage {
         cipher.init(Cipher.DECRYPT_MODE, keySpec);
         return cipher.doFinal(encryptedMnemonicBytes);
     }
+
+    private void downloadUpdate(final URL url) {
+        final long fileSize = getFileSize(url);
+        final String name = url.getFile();
+        try {
+            final ReadableByteChannel inputChannel = Channels.newChannel(url.openStream());
+            final FileChannel outputChannel = new FileOutputStream(UPDATES_FOLDER + name).getChannel();
+            long downloadedSize = outputChannel.transferFrom(inputChannel, 0, Long.MAX_VALUE);
+            if (downloadedSize != fileSize) {
+                downloadUpdate(url);
+            } else {
+                EventPublisher.fireDownloadFinished(name);
+            }
+        } catch (IOException e) {
+            log.error(e.getMessage(), e);
+        }
+    }
+
+    public long getFileSize(URL url) {
+        HttpURLConnection conn = null;
+        try {
+            conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("HEAD");
+            return conn.getContentLengthLong();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                conn.disconnect();
+            }
+        }
+    }
+
 }
