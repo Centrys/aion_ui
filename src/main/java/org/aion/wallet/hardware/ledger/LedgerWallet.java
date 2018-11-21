@@ -38,7 +38,6 @@ public class LedgerWallet implements HardwareWallet {
 
     private static final Logger log = WalletLoggerFactory.getLogger(LogEnum.WLT.name());
 
-    private static final int RETRIES = 3;
     private static final int FIRST_INDEX = 0;
 
     private final Map<Integer, AionAccountDetails> accountCache = new ConcurrentHashMap<>();
@@ -48,30 +47,17 @@ public class LedgerWallet implements HardwareWallet {
 
     @Override
     public boolean isConnected() {
-        LedgerDevice ledgerDevice = null;
         try {
-            ledgerDevice = LedgerUtilities.findLedgerDevice();
-            AionApp aionApp = new AionApp(ledgerDevice);
-            KeyAddress publicKey = aionApp.getPublicKey(FIRST_INDEX);
-            if(publicKey != null) {
-                AionAccountDetails firstAccount = new AionAccountDetails(TypeConverter.toJsonHex(publicKey.getPublicKey()), TypeConverter.toJsonHex(publicKey.getAddress()), FIRST_INDEX);
-                if (accountCache.containsKey(FIRST_INDEX) && !firstAccount.equals(accountCache.get(FIRST_INDEX))) {
-                    accountCache.clear();
-                }
-                return firstAccount != null;
+            AionAccountDetails firstAccount = getAccountDetails(FIRST_INDEX);
+            if (accountCache.containsKey(FIRST_INDEX) && !firstAccount.equals(accountCache.get(FIRST_INDEX))) {
+                accountCache.clear();
             }
-            else {
-                return false;
-            }
-        } catch (IOException | CommsException e) {
-            log.error(e.getMessage());
+            return true;
+        } catch (LedgerException e) {
+            e.printStackTrace();
             return false;
         }
-        finally {
-            if(ledgerDevice != null) {
-                ledgerDevice.close();
-            }
-        }
+
     }
 
     @Override
@@ -115,7 +101,7 @@ public class LedgerWallet implements HardwareWallet {
 
         for (int i = derivationIndexStart + 1; i < derivationIndexEnd; i++) {
             if (!accountCache.containsKey(i)) {
-                accountCache.put(i, getAccountDetailsWithRetries(i));
+                accountCache.put(i, getAccountDetails(i));
             }
             accounts.add(accountCache.get(i));
         }
@@ -123,7 +109,7 @@ public class LedgerWallet implements HardwareWallet {
             try {
                 for (int i = derivationIndexEnd; i < derivationIndexEnd + (derivationIndexEnd - derivationIndexStart); i++) {
                     if (!accountCache.containsKey(i)) {
-                        accountCache.put(i, getAccountDetailsWithRetries(i));
+                        accountCache.put(i, getAccountDetails(i));
                     }
                 }
                 EventPublisher.fireAccountsRecovered(accountCache.values().stream().map(AionAccountDetails::getAddress).collect(Collectors.toSet()));
@@ -136,31 +122,21 @@ public class LedgerWallet implements HardwareWallet {
 
     @Override
     public byte[] signMessage(final int derivationIndex, final byte[] message) throws LedgerException {
+        LedgerDevice ledgerDevice = null;
         try {
-            LedgerDevice ledgerDevice = LedgerUtilities.findLedgerDevice();
+            lock.lock();
+            ledgerDevice = LedgerUtilities.findLedgerDevice();
             AionApp aionApp = new AionApp(ledgerDevice);
             byte[] result = aionApp.signPayload(derivationIndex, message);
-            ledgerDevice.close();
             return result;
         } catch (IOException | CommsException e) {
             throw new LedgerException(e);
         }
-    }
-
-    private AionAccountDetails getAccountDetailsWithRetries(final int index) throws LedgerException {
-        AionAccountDetails accountDetails = null;
-        int retry = 0;
-        do {
-            try {
-                accountDetails = getAccountDetails(index);
-                break;
-            } catch (LedgerException e) {
-                if (retry == RETRIES) {
-                    throw e;
-                }
+        finally {
+            if(ledgerDevice != null) {
+                ledgerDevice.close();
             }
-            retry++;
-        } while (retry <= RETRIES);
-        return accountDetails;
+            lock.unlock();
+        }
     }
 }
