@@ -1,7 +1,6 @@
 package org.aion.wallet.hardware.ledger;
 
 import org.aion.api.log.LogEnum;
-import org.aion.base.util.Hex;
 import org.aion.base.util.TypeConverter;
 import org.aion.ledger.KeyAddress;
 import org.aion.ledger.LedgerDevice;
@@ -13,17 +12,9 @@ import org.aion.wallet.hardware.AionAccountDetails;
 import org.aion.wallet.hardware.HardwareWallet;
 import org.aion.wallet.hardware.HardwareWalletException;
 import org.aion.wallet.log.WalletLoggerFactory;
-import org.aion.wallet.util.CryptoUtils;
-import org.aion.wallet.util.OSUtils;
 import org.slf4j.Logger;
 
-import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -31,7 +22,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class LedgerWallet implements HardwareWallet {
