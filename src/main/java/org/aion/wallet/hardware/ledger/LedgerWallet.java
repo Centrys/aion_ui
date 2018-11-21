@@ -72,9 +72,9 @@ public class LedgerWallet implements HardwareWallet {
                 return new AionAccountDetails(TypeConverter.toJsonHex(publicKey.getPublicKey()), TypeConverter.toJsonHex(publicKey.getAddress()), derivationIndex);
             }
             else {
-                throw new LedgerException("Could not retrieve pulbic key!");
+                throw new LedgerException("Could not retrieve public key!");
             }
-        } catch (IOException | CommsException e) {
+        } catch (IOException | CommsException | NullPointerException e) {
             throw new LedgerException(e);
         }
         finally {
