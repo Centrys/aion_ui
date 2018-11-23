@@ -101,7 +101,6 @@ public class SendController extends AbstractController {
     @Override
     protected void internalInit(final URL location, final ResourceBundle resources) {
         setDefaults();
-
         initTextField(toInput, TO_ADDRESS_TOOLTIP);
         initTextField(nrgInput, NRG_LIMIT_TOOLTIP);
         initTextField(nrgPriceInput, NRG_PRICE_TOOLTIP);
@@ -141,8 +140,7 @@ public class SendController extends AbstractController {
                 if(account != null) {
                     account.setBalance(blockchainConnector.getBalance(account.getPublicAddress()));
                     setAccountBalanceText(account.getFormattedBalance(), account.getCurrency());
-                }
-                else {
+                } else {
                     setAccountBalanceText(String.valueOf(0), "");
                 }
                 break;

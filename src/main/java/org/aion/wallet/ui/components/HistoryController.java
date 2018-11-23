@@ -2,6 +2,7 @@ package org.aion.wallet.ui.components;
 
 import com.google.common.collect.Lists;
 import com.google.common.eventbus.Subscribe;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -68,11 +69,14 @@ public class HistoryController extends AbstractController {
 
     @Override
     protected void refreshView(final RefreshEvent event) {
-        switch (event.getType()) {
-            case TIMER:
-                reloadTransactionHistory();
-                break;
-            default:
+        if (isInView()) {
+            switch (event.getType()) {
+                case TIMER:
+                    log.error("event");
+                    reloadTransactionHistory();
+                    break;
+                default:
+            }
         }
     }
 
@@ -132,7 +136,8 @@ public class HistoryController extends AbstractController {
                 event -> {
                     final List<TxRow> transactions = getTransactionsTask.getValue();
                     completeTransactionList = new ArrayList<>(transactions);
-                    txTable.setItems(FXCollections.observableList(transactions));
+                    Platform.runLater(() -> txTable.setItems(FXCollections.observableList(transactions)));
+                    log.error(completeTransactionList.toString());
                 },
                 getEmptyEvent(),
                 getEmptyEvent()
