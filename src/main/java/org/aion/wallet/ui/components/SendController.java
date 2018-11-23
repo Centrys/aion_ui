@@ -55,6 +55,7 @@ public class SendController extends AbstractController {
     private static final String SEPARATOR = "-----";
 
     private static final String EMPTY = "";
+    private static final String ZERO = "0";
     private static final String AMP_DESCRIPTION = "Amp (1e-9 AION)";
     private static final String NAMP_DESCRIPTION = "nAmp (1e-18 AION)";
 
@@ -137,11 +138,8 @@ public class SendController extends AbstractController {
                 refreshAccountBalance();
                 break;
             case TIMER:
-                if(account != null) {
-                    account.setBalance(blockchainConnector.getBalance(account.getPublicAddress()));
-                    setAccountBalanceText(account.getFormattedBalance(), account.getCurrency());
-                } else {
-                    setAccountBalanceText(String.valueOf(0), "");
+                if (isInView()) {
+                    refreshAccountBalance();
                 }
                 break;
             default:
@@ -420,6 +418,7 @@ public class SendController extends AbstractController {
 
     private void refreshAccountBalance() {
         if (account == null) {
+            setAccountBalanceText(ZERO, EMPTY);
             return;
         }
         final Task<BigInteger> getBalanceTask = getApiTask(blockchainConnector::getBalance, account.getPublicAddress());
@@ -591,7 +590,7 @@ public class SendController extends AbstractController {
         final String selectedItem = currencySelect.getSelectionModel().getSelectedItem();
         if (SEPARATOR.equals(selectedItem)) {
             nrgInput.setText(EMPTY);
-            accountBalance.setText("");
+            accountBalance.setText(EMPTY);
             accountBalance.setVisible(false);
         } else if (getTokens(account).contains(selectedItem)) {
             nrgInput.setText(String.valueOf(AionConstants.DEFAULT_TOKEN_NRG));
@@ -603,7 +602,7 @@ public class SendController extends AbstractController {
                 setAccountBalanceText(selectedTokenBalance, selectedTokenDetails.getSymbol());
             } catch (ValidationException e) {
                 log.info(e.getMessage());
-                setAccountBalanceText("0", currencySelect.getSelectionModel().getSelectedItem());
+                setAccountBalanceText(ZERO, currencySelect.getSelectionModel().getSelectedItem());
             }
 
         } else {
@@ -613,10 +612,10 @@ public class SendController extends AbstractController {
                 setAccountBalanceText(account.getFormattedBalance(), account.getCurrency());
             }
             else {
-                setAccountBalanceText(String.valueOf(0), "");
+                setAccountBalanceText(ZERO, EMPTY);
             }
         }
-        valueInput.setText("");
+        valueInput.setText(EMPTY);
     }
 
     public void populateAmountWithAllFunds() {
