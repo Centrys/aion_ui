@@ -139,6 +139,7 @@ public class SendController extends AbstractController {
                 break;
             case TIMER:
                 if(account != null) {
+                    account.setBalance(blockchainConnector.getBalance(account.getPublicAddress()));
                     setAccountBalanceText(account.getFormattedBalance(), account.getCurrency());
                 }
                 else {
