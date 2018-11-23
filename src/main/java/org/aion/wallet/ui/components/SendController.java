@@ -137,6 +137,14 @@ public class SendController extends AbstractController {
                 currencySelect.getSelectionModel().select(0);
                 refreshAccountBalance();
                 break;
+            case TIMER:
+                if(account != null) {
+                    setAccountBalanceText(account.getFormattedBalance(), account.getCurrency());
+                }
+                else {
+                    setAccountBalanceText(String.valueOf(0), "");
+                }
+                break;
             default:
         }
         setTimedOutTransactionsLabelText();
@@ -602,7 +610,12 @@ public class SendController extends AbstractController {
         } else {
             accountBalance.setVisible(true);
             nrgInput.setText(String.valueOf(AionConstants.DEFAULT_NRG));
-            setAccountBalanceText(account.getFormattedBalance(), account.getCurrency());
+            if(account != null) {
+                setAccountBalanceText(account.getFormattedBalance(), account.getCurrency());
+            }
+            else {
+                setAccountBalanceText(String.valueOf(0), "");
+            }
         }
         valueInput.setText("");
     }
